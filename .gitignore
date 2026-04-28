@@ -1,0 +1,29 @@
+# Build artifacts
+/target/
+**/*.rs.bk
+
+# Cargo lock (binary project)
+# Cargo.lock
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+
+# GeminiX runtime data (contains audit logs, sessions, cached tokens)
+.geminix/audit.log
+.geminix/sessions/
+
+# Binary releases
+*.tar.gz
+*.zip

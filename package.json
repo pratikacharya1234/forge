@@ -1,0 +1,6 @@
+{
+  "name": "gemini-code",
+  "version": "1.0.0",
+  "private": true,
+  "description": "GeminiX — Gemini-powered AI coding agent (Rust terminal app)"
+}

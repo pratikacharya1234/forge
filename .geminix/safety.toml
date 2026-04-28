@@ -1,0 +1,24 @@
+# Per-project safety policy for GeminiX development
+# Unset = use built-in defaults
+
+[permissions]
+destructive_commands = "confirm"    # rm -rf, rm -r
+network_commands     = "warn"       # curl, wget, npm install
+git_destructive       = "confirm"   # git reset --hard, push --force
+sudo_commands        = "deny"       # anything with sudo
+publish_commands     = "confirm"    # cargo publish, npm publish
+
+[trusted_commands]
+allow = [
+    "cargo check",
+    "cargo build",
+    "cargo test",
+    "cargo fmt",
+    "cargo clippy",
+]
+
+[blocked_commands]
+deny = [
+    "rm -rf /",
+    "curl.*| sh",
+]
