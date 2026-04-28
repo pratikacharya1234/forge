@@ -1,169 +1,163 @@
 # GeminiX
 
-Terminal AI coding agent powered by Google Gemini. Written in Rust.
+<p align="center">
+  <b>The open-source, multi-model terminal coding agent. 1M token context. Free.</b>
+</p>
 
-v0.0.1 — first public release.
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
+  <a href="#"><img src="https://img.shields.io/badge/rust-1.75%2B-orange.svg" alt="Rust 1.75+"></a>
+  <a href="#"><img src="https://img.shields.io/badge/context-1M%20tokens-green.svg" alt="1M Token Context"></a>
+  <a href="#"><img src="https://img.shields.io/badge/models-Gemini%20%7C%20Claude%20%7C%20GPT-purple.svg" alt="Multi-model"></a>
+</p>
 
-Made by [pratikacharya1234](https://github.com/pratikacharya1234).
+---
 
-## What It Does
+GeminiX is a terminal AI coding agent that reads, writes, and edits code; runs shell commands; searches your codebase; executes tests; and iterates until the job is done. Streaming output, multi-model support, 1 million token context window — all in a single Rust binary.
 
-Runs an agentic loop: you give it a task, it reads files, writes code, runs shell commands, searches the web, and iterates until done. Streaming output in real time with thinking token display (gemini-2.5+).
+**Why it exists:** Claude Code costs money. Cursor is tied to VS Code. Most coding agents lock you into one model. GeminiX is free, open-source, multi-model, and works anywhere you have a terminal.
 
-## Features
+## What Makes It Different
 
-### Agentic Loop
-- Streaming Gemini API with real-time token display
-- Thinking/reasoning token visualization (gemini-2.5+)
-- Parallel tool execution via Tokio
-- Configurable iteration limits with pause/resume
-- Auto-apply mode for non-interactive use
-- Single-prompt mode for scripting
+| | GeminiX | Claude Code | Cursor | Copilot |
+|---|---|---|---|---|
+| **Price** | Free | $20-200/mo | $20/mo | $10/mo |
+| **Open source** | ✅ MIT | ❌ | ❌ | ❌ |
+| **Multi-model** | Gemini + Claude + GPT | Claude only | Multi-model | GPT only |
+| **Max context** | 1M tokens | 200K | ~200K | ~64K |
+| **Interface** | Terminal | Terminal | VS Code | VS Code |
+| **MCP support** | ✅ | ✅ | ✅ | ❌ |
+| **Native integrations** | GitHub, Discord, Gmail, Drive | GitHub | ❌ | GitHub |
+| **Privacy** | Your machine, your keys | Their servers | Their servers | Their servers |
+| **Binary size** | 11MB | ~100MB+ | N/A | N/A |
 
-### Built-in Tools (16)
-read_file, write_file, edit_file (fuzzy matching + occurrence param), append_file, bash (streaming + safety), list_files, search_files (regex), glob, create_directory, delete_file, move_file, copy_file, url_fetch (cached), git_snapshot
-
-### Safety
-- 4-level risk classification: Allow / Warn / Confirm / Deny
-- Pipe-to-shell detection and blocking
-- Per-project safety.toml policy overrides
-- All destructive operations require confirmation
-
-### Diff & Undo
-- Unified diff preview before file writes
-- Per-hunk interactive review (accept/reject/skip per hunk)
-- In-memory undo stack with /undo and /undo N
-
-### Context Management
-- Token usage display per turn (prompt + output + thinking)
-- Context window progress bar with configurable warnings
-- Auto-compaction at threshold (summarizes history via Gemini)
-- Manual /compact for token savings
-
-### Session Persistence
-- Binary save/restore of full conversation history
-- /session save, load, list, delete
-- Auto-save after each turn
-
-### Cost Tracking
-- Per-model pricing (2.5-pro, 2.5-flash, 2.0-flash, 2.0-flash-lite)
-- Per-session cost accumulation with USD display
-- Daily budget support with warning at 80%
-
-### MCP Support
-Full JSON-RPC 2.0 MCP client over stdio (protocol 2025-03-26).
-Auto-discovers tools from any MCP-compliant server.
-Parallel server startup, 5s write / 60s response timeout safety.
-
-### Native Integrations (33 tools)
-| Service | Tools | Auth |
-|---------|-------|------|
-| GitHub | list_repos, get_repo, create_issue, list_issues, get_issue, comment_issue, close_issue, create_pr, list_prs, get_pr, search_code, list_branches | Personal Access Token |
-| Discord | send_message, read_messages, list_channels, list_guilds, create_channel, delete_message, get_channel_info | Bot Token |
-| Google Drive | list_files, get_file, download_file, create_folder, upload_file, search_files, delete_file | OAuth2 |
-| Gmail | send_email, list_emails, get_email, search_emails, list_labels, mark_read, delete_email | OAuth2 |
-
-### Project Awareness
-- .geminix/project.md auto-loaded into system prompt
-- /load: load directory tree into context
-- /learn: clone public git repo and load for Q&A
-
-### Security
-- /security: cargo audit + npm audit + static secret scan + Gemini CVE analysis
-- /screenshot: Vision-based bug finding and fixes
-
-### Profiles
-Named configuration profiles in ~/.geminix/config.toml with /profile command.
-
-## Slash Commands
-
-/quit (/q, /exit), /clear (/c), /compact, /undo, /undo N, /snapshot, /rollback
-/diff, /tokens, /audit, /think, /web, /apply, /load, /learn, /screenshot
-/pr, /security, /cd, /model, /models, /save, /session, /cost, /profile
-/history, /debug, /help (/h)
-
-## Quick Install
+## Quick Start
 
 ```bash
-# Via install script (recommended)
-curl -fsSL https://raw.githubusercontent.com/pratikacharya1234/geminix/main/install.sh | bash
+# Get a free API key
+# → https://aistudio.google.com/apikey
 
-# Or build from source
-cargo install --git https://github.com/pratikacharya1234/geminix
-```
-
-## Prerequisites
-
-- Rust 1.75+ (for source builds)
-- Gemini API key (free at https://aistudio.google.com/apikey)
-- Optional: gh CLI, cargo-audit (for /security)
-
-## Build from Source
-
-```bash
+# Build
 git clone https://github.com/pratikacharya1234/geminix.git
 cd geminix
 cargo build --release
+
+# Run
+export GEMINI_API_KEY="your-key"
+./target/release/geminix
 ```
 
-Binary: `target/release/geminix`
-
-## Usage
+Or with other models:
 
 ```bash
-export GEMINI_API_KEY="..."
+# Claude (requires Anthropic API key)
+geminix --model claude-4-sonnet --anthropic-api-key "sk-ant-..."
 
-geminix                                    # interactive session
-geminix --prompt "Fix error handling"      # single prompt
-geminix --think --grounding                # thinking + web search
-geminix --model gemini-2.5-pro             # different model
-geminix --screenshot bug.png               # vision analysis
+# GPT (requires OpenAI API key)
+geminix --model gpt-4.1 --openai-api-key "sk-..."
 ```
 
-## Config
+## Usage Examples
 
-~/.geminix/config.toml:
+```bash
+# Interactive session
+geminix
 
-```toml
-api_key = "AIza..."
-model = "gemini-2.5-flash"
-daily_budget_usd = 5.00
+# Single prompt, exit after
+geminix --prompt "add rate limiting to the API endpoints"
 
-[thinking]
-enabled = false
-budget = 8000
+# With thinking mode (Gemini 2.5+)
+geminix --think --model gemini-2.5-pro
 
-[integrations.github]
-token = "ghp_..."
+# Google Search grounding
+geminix --grounding --prompt "what's the latest tokio API for graceful shutdown"
 
-[integrations.discord]
-bot_token = "..."
+# Auto-apply changes (skip diff review, CI mode)
+geminix --auto-apply --prompt "fix all compiler warnings"
 
-[integrations.google]
-client_id = "..."
-client_secret = "..."
-refresh_token = "..."
-gdrive_enabled = true
-gmail_enabled = true
+# Screenshot-based bug fixing
+geminix --screenshot bug-report.png
 
-[mcp_servers.postgres]
-command = "npx"
-args = ["-y", "@modelcontextprotocol/server-postgres"]
-
-[profiles.work]
-model = "gemini-2.5-pro"
-thinking = true
-grounding = true
-daily_budget_usd = 10.0
+# Auto model routing — picks best model per task
+geminix --model auto
 ```
 
-Per-project .geminix/safety.toml:
+## Command Reference
+
+### Session Controls
+| Command | Action |
+|---|---|
+| `/model <name>` | Switch model (gemini-2.5-pro, claude-4-sonnet, gpt-4.1, etc.) |
+| `/model auto` | Auto-select best model per task |
+| `/model list` | List all available models |
+| `/think [on\|off\|budget]` | Toggle thinking/reasoning mode |
+| `/grounding [on\|off]` | Toggle Google Search grounding |
+| `/explain [on\|off]` | Show planned actions before executing |
+| `/apply [on\|off]` | Toggle auto-apply file changes |
+| `/compact` | Summarize and free context |
+
+### Code & Testing
+| Command | Action |
+|---|---|
+| `/test-fix [cmd] [cycles]` | Test → fix → test loop until passing |
+| `/diff` | Show unified diff of last change |
+| `/undo [N]` | Undo last N file changes |
+| `/snapshot` | Capture current state |
+| `/rollback` | Restore from snapshot |
+
+### Memory & Context
+| Command | Action |
+|---|---|
+| `/memorize <fact>` | Save fact to persistent memory |
+| `/forget <keyword>` | Remove entries from memory |
+| `/memory` | View all memorized facts |
+| `/load [dir]` | Load directory tree into context |
+| `/learn <repo-url>` | Clone and analyze a repo |
+
+### Sessions & History
+| Command | Action |
+|---|---|
+| `/session save <name>` | Save conversation to disk |
+| `/session load <name>` | Restore saved session |
+| `/session list` | List saved sessions |
+| `/tokens` | View token usage |
+| `/history [N]` | Show conversation history |
+| `/cost` | Show session cost |
+| `/profile <name>` | Load named config profile |
+
+### Integrations & Security
+| Command | Action |
+|---|---|
+| `/pr` | Auto-create GitHub PR |
+| `/security` | Run full security sweep |
+| `/screenshot <path>` | Vision-based code analysis |
+| `/audit [N]` | View audit log |
+| `/debug` | Toggle debug output |
+
+### Navigation
+| Command | Action |
+|---|---|
+| `/cd <path>` | Change working directory |
+| `/save <file>` | Save transcript to file |
+| `/quit` or `/exit` | End session |
+| `/help` | Show help |
+
+## Safety System
+
+GeminiX classifies every operation:
+
+| Level | Behavior | Examples |
+|---|---|---|
+| **Allow** | Runs immediately | `cargo check`, `ls`, `grep` |
+| **Warn** | Runs with notice | `curl`, `wget`, `npm install` |
+| **Confirm** | Asks before running | `rm`, `mv`, `git push` |
+| **Deny** | Blocked entirely | `rm -rf /`, `> /dev/sda`, `curl \| bash` |
+
+Per-project overrides in `.geminix/safety.toml`:
 
 ```toml
 [permissions]
 destructive_commands = "confirm"
-network_commands = "warn"
-git_destructive = "confirm"
 sudo_commands = "deny"
 publish_commands = "confirm"
 
@@ -178,31 +172,143 @@ deny = ["rm -rf /"]
 
 ```
 src/
-  main.rs           CLI entry point
-  agent.rs          Agentic loop, slash commands, streaming
-  gemini.rs          Gemini API client (SSE streaming)
-  tools.rs           16 built-in tools + dispatch
-  safety.rs          4-level risk classifier + policy engine
-  diff_view.rs       Unified diff + per-hunk review
-  snapshot.rs        In-memory undo stack
-  session.rs         Session save/restore persistence
-  token_counter.rs   Cost tracking + budget management
-  audit.rs           JSON audit log
-  config.rs          Config loading, profiles, context windows
-  project.rs         Directory loading, git clone
-  security.rs        Security sweep (cargo/npm audit, CVE)
-  ui.rs              Terminal UI, help, context bar
-  mcp.rs             MCP client (JSON-RPC 2.0, stdio)
+  main.rs           CLI entry point, argument parsing
+  agent.rs          Agentic loop, slash commands, streaming (1685 lines)
+  backend.rs        Multi-model backend: Gemini, Anthropic, OpenAI (1215 lines)
+  gemini.rs         Gemini API types + client
+  tools.rs          16 built-in tools + dispatch (887 lines)
+  safety.rs         4-level risk classifier + policy engine + per-project config
+  diff_view.rs      Unified diff + per-hunk interactive review
+  snapshot.rs       In-memory undo/redo stack
+  session.rs        Binary session save/restore persistence
+  token_counter.rs  Cost tracking + budget management
+  audit.rs          JSON audit logging
+  config.rs         Config loading, profiles, context windows
+  project.rs        Directory loading, git clone for /learn
+  security.rs       Security sweep: cargo/npm audit, secret scan, CVE analysis
+  ui.rs             Terminal UI, help output, context bar
+  mcp.rs            MCP client: JSON-RPC 2.0 over stdio (572 lines)
+  models.rs         Model resolution and discovery
   integrations/
-    mod.rs           Registry + dispatch
-    github.rs        12 GitHub API tools
-    discord.rs       7 Discord API tools
-    google.rs        OAuth2 engine + 7 Drive + 7 Gmail tools
+    mod.rs          Registry + dispatch
+    github.rs       12 GitHub API tools (639 lines)
+    discord.rs      7 Discord API tools (409 lines)
+    google.rs       OAuth2 engine + 7 Drive + 7 Gmail tools (992 lines)
+```
+
+## Features
+
+### Agentic Loop
+- Streaming output with real-time token display
+- Thinking/reasoning token visualization
+- Parallel tool execution via Tokio
+- Configurable iteration limits with pause/resume
+- Per-hunk diff review (accept/reject/skip individual changes)
+- Stuck detection: pauses after 3 consecutive identical errors
+- In-memory undo stack
+
+### Multi-Model Support
+- Gemini 2.5 Pro/Flash/Lite, 2.0 Flash
+- Claude 4 Opus/Sonnet, Claude 3.5 Sonnet
+- GPT-4.1, GPT-4o, o3, o4-mini
+- Auto-routing: picks best model based on task complexity
+- Provider-aware model hints in system prompt
+- SSE streaming with proper tool call round-trips per provider
+
+### Built-in Tools (16)
+`read_file`, `write_file`, `edit_file` (fuzzy matching + occurrence), `append_file`, `bash` (streaming), `list_files`, `search_files` (regex), `glob`, `create_directory`, `delete_file`, `move_file`, `copy_file`, `url_fetch` (cached), `git_snapshot`
+
+### Native Integrations (33 tools)
+- **GitHub:** repos, issues, PRs, code search, branches (12 tools)
+- **Discord:** messages, channels, guilds, embeds (7 tools)
+- **Google Drive:** files, folders, upload, search (7 tools)
+- **Gmail:** send, list, search, labels (7 tools)
+
+### MCP Support
+Full JSON-RPC 2.0 MCP client (protocol 2025-03-26) over stdio. Auto-discovers tools from any MCP-compliant server. Parallel startup with timeout safety.
+
+### Context & Memory
+- 1M token context window (Gemini 2.5 models)
+- Auto-compaction at configurable threshold
+- Persistent memory via `/memorize` and `/forget`
+- Project instructions via `.geminix/project.md`
+
+### Testing & Quality
+- Test-fix loop: run tests → detect failures → fix → repeat
+- Explain-before-execute: preview planned actions
+- Auto-apply mode for CI/CD pipelines
+- Context window progress bar with warnings
+
+### Security
+- 4-level risk classification
+- Per-project safety policy overrides
+- Pipe-to-shell detection
+- Security sweep: cargo audit + npm audit + secret scan + CVE analysis
+- All API keys from env vars, never hardcoded
+
+### Profiles & Cost
+- Named configuration profiles
+- Per-model cost tracking with USD display
+- Daily budget support with warnings
+- `/cost` command for session stats
+
+## Configuration
+
+`~/.geminix/config.toml`:
+
+```toml
+api_key = "AIza..."
+model = "gemini-2.5-flash"
+daily_budget_usd = 5.00
+
+[thinking]
+enabled = false
+budget = 8000
+
+# Multi-model keys
+anthropic_api_key = "sk-ant-..."
+openai_api_key = "sk-..."
+
+[integrations.github]
+token = "ghp_..."
+
+[integrations.discord]
+bot_token = "..."
+
+[integrations.google]
+client_id = "..."
+client_secret = "..."
+refresh_token = "..."
+
+[mcp_servers.postgres]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-postgres"]
+
+[profiles.work]
+model = "gemini-2.5-pro"
+thinking = true
+grounding = true
+daily_budget_usd = 10.0
+```
+
+## Prerequisites
+
+- Rust 1.75+ (for source builds)
+- A Gemini, Anthropic, or OpenAI API key
+- Optional: `gh` CLI, `cargo-audit`, `npm` for security sweeps
+
+## Build
+
+```bash
+git clone https://github.com/pratikacharya1234/geminix.git
+cd geminix
+cargo build --release
+# Binary: target/release/geminix (11MB)
 ```
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, project structure, and guidelines.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, project structure, and guidelines for adding tools, integrations, and slash commands.
 
 ## Changelog
 
@@ -211,3 +317,9 @@ See [CHANGELOG.md](CHANGELOG.md) for the full release history.
 ## License
 
 MIT — see [LICENSE](LICENSE) for details.
+
+---
+
+<p align="center">
+  <b>Built with Rust. Powered by Gemini. Free forever.</b>
+</p>

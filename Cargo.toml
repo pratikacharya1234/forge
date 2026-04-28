@@ -1,6 +1,6 @@
 [package]
 name = "geminix"
-version = "0.0.1"
+version = "1.0.0"
 edition = "2021"
 description = "Terminal AI coding agent powered by Google Gemini"
 authors = ["pratikacharya1234"]

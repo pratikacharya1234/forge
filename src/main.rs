@@ -23,7 +23,7 @@ mod ui;
 #[clap(
     name    = "geminix",
     about   = "GeminiX — Terminal AI coding agent powered by Google Gemini",
-    version = "0.0.1",
+    version = "1.0.0",
     long_about = None
 )]
 struct Args {
