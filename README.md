@@ -33,18 +33,26 @@ GeminiX is a terminal AI coding agent that reads, writes, and edits code; runs s
 
 ## Quick Start
 
-```bash
-# Get a free API key
-# → https://aistudio.google.com/apikey
+### One-liner install
 
-# Build
+```bash
+curl -fsSL https://raw.githubusercontent.com/pratikacharya1234/geminix/main/install.sh | bash
+```
+
+### Manual install
+
+```bash
 git clone https://github.com/pratikacharya1234/geminix.git
 cd geminix
-cargo build --release
+bash install.sh
+```
 
-# Run
+### Run
+
+```bash
+# Get a free API key → https://aistudio.google.com/apikey
 export GEMINI_API_KEY="your-key"
-./target/release/geminix
+geminix
 ```
 
 Or with other models:
@@ -305,6 +313,19 @@ cd geminix
 cargo build --release
 # Binary: target/release/geminix (11MB)
 ```
+
+Or use the installer:
+
+```bash
+bash install.sh
+
+# Options:
+bash install.sh --dir /usr/local/bin    # custom install path
+bash install.sh --version 1.0.0         # specific version
+GEMINIX_FROM_SOURCE=1 bash install.sh   # force source build
+```
+
+Prebuilt binaries available on [GitHub Releases](https://github.com/pratikacharya1234/geminix/releases).
 
 ## Contributing
 

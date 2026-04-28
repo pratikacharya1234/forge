@@ -27,3 +27,4 @@ Thumbs.db
 # Binary releases
 *.tar.gz
 *.zip
+packages/
