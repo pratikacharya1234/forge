@@ -217,7 +217,9 @@ fn static_scan() -> Vec<String> {
     ];
 
     let skip_exts = ["lock", "sum", "png", "jpg", "pdf", "gz", "zip"];
-    let skip_dirs = ["target", "node_modules", ".git"];
+    let skip_dirs = ["target", "node_modules", ".git", "packages"];
+    // Documentation files that contain example keys
+    let skip_files = ["README.md", "CHANGELOG.md", "LICENSE", "CONTRIBUTING.md", "install.sh", "release.sh"];
 
     let mut findings = Vec::new();
 
@@ -239,6 +241,9 @@ fn static_scan() -> Vec<String> {
 
         if skip_dirs.iter().any(|d| path_str.contains(&format!("/{}/", d))) {
             continue;
+        }
+        if let Some(fname) = path.file_name().and_then(|n| n.to_str()) {
+            if skip_files.contains(&fname) { continue; }
         }
         let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
         if skip_exts.contains(&ext) { continue; }

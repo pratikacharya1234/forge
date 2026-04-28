@@ -28,3 +28,6 @@ Thumbs.db
 *.tar.gz
 *.zip
 packages/
+
+# Generated reports
+security_audit_*.md

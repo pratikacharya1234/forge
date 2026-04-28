@@ -47,10 +47,16 @@ pub fn filter_coding_models(models: &[ModelInfo]) -> Vec<ModelInfo> {
         "gemini-2.0-flash",
     ];
 
+    // Junk display names from Gemini API (internal codenames)
+    let skip_displays: Vec<&str> = vec![
+        "nano banana", "nano", "banana",
+    ];
+
     let mut filtered: Vec<ModelInfo> = models
         .iter()
         .filter(|m| {
             let name = m.name.to_lowercase();
+            let display = m.display_name.as_deref().unwrap_or("").to_lowercase();
             let has_gemini = name.contains("gemini");
             let is_chat_model = m
                 .supported_methods
@@ -59,7 +65,8 @@ pub fn filter_coding_models(models: &[ModelInfo]) -> Vec<ModelInfo> {
                 .unwrap_or(false);
             let is_relevant = code_relevant.iter().any(|p| name.contains(p));
             let is_latest = !name.contains("1.0") && !name.contains("1.5");
-            has_gemini && is_chat_model && is_relevant && is_latest
+            let has_junk_display = skip_displays.iter().any(|j| display.contains(*j));
+            has_gemini && is_chat_model && is_relevant && is_latest && !has_junk_display
         })
         .cloned()
         .collect();
@@ -68,10 +75,13 @@ pub fn filter_coding_models(models: &[ModelInfo]) -> Vec<ModelInfo> {
         filtered = models
             .iter()
             .filter(|m| {
+                let display = m.display_name.as_deref().unwrap_or("").to_lowercase();
+                let has_junk = skip_displays.iter().any(|j| display.contains(*j));
                 m.supported_methods
                     .as_ref()
                     .map(|m| m.iter().any(|s| s == "generateContent"))
                     .unwrap_or(false)
+                    && !has_junk
             })
             .cloned()
             .collect();

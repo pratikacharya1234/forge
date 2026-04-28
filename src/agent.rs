@@ -1013,7 +1013,7 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                 session_tokens = session_tokens.saturating_add(tokens);
                 let window = config::context_window(&current_model);
                 let pct = session_tokens as f32 / window as f32;
-                if pct >= active_cfg.context_warn {
+                if session_tokens > 0 && pct >= active_cfg.context_warn {
                     ui::print_context_warning(pct);
                 }
                 // Cost tracking

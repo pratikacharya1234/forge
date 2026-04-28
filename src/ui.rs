@@ -14,7 +14,7 @@ pub fn print_banner(grounding: bool, thinking: bool, auto_apply: bool) {
         width = width - 4
     );
     println!(
-        "  {}  GeminiX v0.0.1   {}{}",
+        "  {}  GeminiX v1.0.0   {}{}",
         "||".bright_blue(),
         " ".repeat(width - 24),
         "||".bright_blue()
@@ -57,7 +57,7 @@ pub fn print_banner(grounding: bool, thinking: bool, auto_apply: bool) {
 
     let cmds = [
         "/help", "/think", "/web", "/model", "/undo",
-        "/compact", "/session", "/security", "/quit",
+        "/compact", "/session", "/security", "/test-fix", "/quit",
     ];
     print!("  {}  ", "->".bright_blue().dimmed());
     for cmd in &cmds {
@@ -200,33 +200,51 @@ pub fn print_help() {
     );
 
     let cmds: &[(&str, &str)] = &[
+        // Core
         ("/quit  /exit",               "exit GeminiX"),
         ("/clear",                     "clear conversation history"),
+        ("",                            ""),
+        // Model & Thinking
+        ("/model <name|auto|list|info>", "switch model: auto-routing, list, info"),
+        ("/models",                    "fetch available models from Gemini API"),
+        ("/think [on|off|budget=N]",   "toggle thinking mode (gemini-2.5+)"),
+        ("/web",                       "toggle Google Search grounding"),
+        ("/apply [on|off]",            "toggle auto-apply (skip diff prompts)"),
+        ("/explain [on|off]",          "show planned actions before executing"),
+        ("",                            ""),
+        // Code & Testing
+        ("/test-fix <cmd> [cycles]",    "test -> fix -> retest loop"),
+        ("/pr <title>",                "push branch and create GitHub PR"),
         ("/compact",                   "summarize history to save tokens"),
         ("/undo",                      "revert last file change"),
         ("/undo N",                    "revert last N file changes"),
         ("/snapshot",                  "create git stash snapshot"),
         ("/rollback",                  "restore from last git stash"),
         ("/diff",                      "show pending snapshot list"),
-        ("/tokens",                    "show context window usage"),
-        ("/audit [N]",                 "show last N actions (default 10)"),
-        ("/think [on|off|budget=N]",   "toggle thinking mode (gemini-2.5+)"),
-        ("/web",                       "toggle Google Search grounding"),
-        ("/apply [on|off]",            "toggle auto-apply (skip diff prompts)"),
+        ("",                            ""),
+        // Memory
+        ("/memorize <fact>",           "save fact to persistent memory"),
+        ("/forget <keyword>",          "remove entries from memory"),
+        ("/memory",                    "view all memorized facts"),
+        ("",                            ""),
+        // Context & Data
         ("/load [path]",               "load project into context"),
         ("/learn <git-url>",           "clone and load any OSS repo"),
-        ("/screenshot <path>",         "vision analysis for bug finding"),
-        ("/pr <title>",                "push branch and create GitHub PR"),
-        ("/security",                  "security sweep with CVE scan"),
-        ("/cd <dir>",                  "change working directory"),
-        ("/model <name|list|info>",    "switch model or list available"),
-        ("/models",                    "fetch available models from Gemini API"),
+        ("/tokens",                    "show context window usage"),
+        ("/cost",                      "show session token costs and budget"),
+        ("",                            ""),
+        // Sessions
         ("/session save|load|list|del","manage saved sessions"),
         ("/save [file]",               "export session as Markdown"),
-        ("/cost",                      "show session token costs and budget"),
-        ("/profile <name>",            "apply named config profile"),
         ("/history [N]",               "show last N conversation turns"),
+        ("",                            ""),
+        // Safety & Debug
+        ("/security",                  "security sweep with CVE scan"),
+        ("/audit [N]",                 "show last N actions (default 10)"),
+        ("/profile <name>",            "apply named config profile"),
+        ("/screenshot <path>",         "vision analysis for bug finding"),
         ("/debug",                     "toggle debug output"),
+        ("/cd <dir>",                  "change working directory"),
         ("/help",                      "show this help"),
     ];
 
