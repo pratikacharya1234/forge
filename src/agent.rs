@@ -1252,14 +1252,14 @@ async fn agentic_loop(
 
                 // Context bar when approaching limit
                 let window = config::context_window(&config.model);
-                let pct = p as f32 / window as f32;
-                if pct >= 0.60 {
-                    ui::print_context_bar(p, window);
+                let total_pct = total_prompt_tokens as f32 / window as f32;
+                if total_pct >= 0.40 {
+                    ui::print_context_bar(total_prompt_tokens, window);
                 }
-                if pct >= config.context_compact {
+                if total_prompt_tokens > 0 && total_pct >= config.context_compact {
                     println!(
                         "  {} Context at {:.0}% — run {} now to avoid truncation",
-                        "[CRITICAL]".red(), pct * 100.0, "/compact".yellow()
+                        "[CRITICAL]".red(), total_pct * 100.0, "/compact".yellow()
                     );
                 }
             }
