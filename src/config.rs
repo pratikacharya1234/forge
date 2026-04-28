@@ -20,6 +20,9 @@ pub struct Config {
     pub mcp_servers: HashMap<String, McpServerConfig>,
     pub integrations: IntegrationsConfig,
     pub daily_budget_usd: Option<f64>,
+    pub anthropic_api_key: Option<String>,
+    pub openai_api_key: Option<String>,
+    pub explain_before_execute: bool,
 }
 
 impl Default for Config {
@@ -37,6 +40,9 @@ impl Default for Config {
             mcp_servers:     HashMap::new(),
             integrations:    IntegrationsConfig::default(),
             daily_budget_usd: None,
+            anthropic_api_key: None,
+            openai_api_key: None,
+            explain_before_execute: false,
         }
     }
 }
@@ -74,6 +80,10 @@ struct FileConfig {
 
     #[serde(default)]
     daily_budget_usd: Option<f64>,
+
+    anthropic_api_key: Option<String>,
+    openai_api_key: Option<String>,
+    explain_before_execute: Option<bool>,
 
     #[serde(default)]
     profiles: HashMap<String, ProfileConfig>,
@@ -121,6 +131,9 @@ impl Config {
             mcp_servers:     cfg.mcp_servers,
             integrations:    cfg.integrations,
             daily_budget_usd: cfg.daily_budget_usd,
+            anthropic_api_key: cfg.anthropic_api_key,
+            openai_api_key: cfg.openai_api_key,
+            explain_before_execute: cfg.explain_before_execute.unwrap_or(false),
         }
     }
 }
@@ -139,6 +152,9 @@ pub struct FileDefaults {
     pub mcp_servers: HashMap<String, McpServerConfig>,
     pub integrations: IntegrationsConfig,
     pub daily_budget_usd: Option<f64>,
+    pub anthropic_api_key: Option<String>,
+    pub openai_api_key: Option<String>,
+    pub explain_before_execute: bool,
 }
 
 pub fn load_profile(name: &str) -> Option<ProfileConfig> {

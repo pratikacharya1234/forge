@@ -6,6 +6,7 @@ use rustyline::DefaultEditor;
 
 use std::sync::Arc;
 
+use crate::backend::{self, BackendClient, Provider};
 use crate::config::{self, Config};
 use crate::gemini::*;
 use crate::integrations::IntegrationRegistry;
@@ -139,19 +140,42 @@ After EVERY code change, mentally verify:
 Working directory: {cwd}
 "#;
 
-fn model_hint(model: &str) -> &'static str {
-    if model.contains("2.5-pro") || model.contains("pro") {
-        "You are running on gemini-2.5-pro with deep reasoning capability. Use it for complex architecture decisions, multi-file refactoring requiring cross-file analysis, security audits, and tasks where correctness matters more than speed. Think through edge cases before coding. Prefer thoroughness over velocity."
-    } else if model.contains("2.5-flash-lite") {
-        "You are running on gemini-2.5-flash-lite — the cheapest model. Keep responses concise and focused. Prefer single-file changes. Use tools efficiently."
-    } else if model.contains("2.5-flash") || model.contains("2.5") {
-        "You are optimized for speed and accuracy on gemini-2.5-flash. Focus on quick, precise edits and rapid iteration. For simple tasks, execute immediately. For complex tasks, plan briefly then execute. Default to the fastest correct approach."
-    } else if model.contains("2.0-flash-lite") {
-        "You are running on a lightweight model. Keep responses focused and concise. Prefer single-file changes over multi-file refactors. Use tools efficiently — don't over-read files."
-    } else if model.contains("2.0") {
-        "You are running on gemini-2.0-flash. Fast and capable for everyday coding tasks."
-    } else {
-        ""
+fn model_hint(config: &Config) -> String {
+    let model = &config.model;
+    let provider = backend::detect_provider(model);
+
+    match provider {
+        Provider::Gemini => {
+            if model.contains("2.5-pro") || model.contains("pro") {
+                "You are running on gemini-2.5-pro with deep reasoning capability. Use it for complex architecture decisions, multi-file refactoring requiring cross-file analysis, security audits, and tasks where correctness matters more than speed. Think through edge cases before coding. Prefer thoroughness over velocity.".into()
+            } else if model.contains("2.5-flash-lite") {
+                "You are running on gemini-2.5-flash-lite — the cheapest model. Keep responses concise and focused. Prefer single-file changes. Use tools efficiently.".into()
+            } else if model.contains("2.5-flash") || model.contains("2.5") {
+                "You are optimized for speed and accuracy on gemini-2.5-flash. Focus on quick, precise edits and rapid iteration. For simple tasks, execute immediately. For complex tasks, plan briefly then execute. Default to the fastest correct approach.".into()
+            } else if model.contains("2.0-flash-lite") {
+                "You are running on a lightweight model. Keep responses focused and concise. Prefer single-file changes over multi-file refactors. Use tools efficiently — don't over-read files.".into()
+            } else if model.contains("2.0") {
+                "You are running on gemini-2.0-flash. Fast and capable for everyday coding tasks.".into()
+            } else { String::new() }
+        }
+        Provider::Anthropic => {
+            if model.contains("opus") {
+                format!("You are running on {model} — Anthropic's most capable model with deep reasoning. Use it for complex architecture, multi-file refactoring, and tasks requiring careful analysis.")
+            } else if model.contains("sonnet") {
+                format!("You are running on {model} — Anthropic's balanced model. Good for everyday coding with strong reasoning. Use extended thinking when tackling complex problems.")
+            } else {
+                format!("You are running on {model} — Anthropic Claude model.")
+            }
+        }
+        Provider::OpenAI => {
+            if model.contains("gpt-5") || model.contains("o4") || model.contains("o3") {
+                format!("You are running on {model} — OpenAI's most capable model. Excellent at complex reasoning, code generation, and multi-step tasks.")
+            } else if model.contains("gpt-4") || model.contains("o1") {
+                format!("You are running on {model} — OpenAI's advanced model. Strong at reasoning and code generation.")
+            } else {
+                format!("You are running on {model} — OpenAI model.")
+            }
+        }
     }
 }
 
@@ -182,7 +206,7 @@ fn system_prompt(config: &Config) -> String {
     };
 
     SYSTEM_PROMPT_BASE
-        .replace("{model_hint}", model_hint(&config.model))
+        .replace("{model_hint}", &model_hint(config))
         .replace("{project_context}", &load_project_context())
         .replace("{cwd}", &cwd_safe)
         + grounding_line
@@ -255,7 +279,7 @@ fn build_generation_config(thinking: bool, thinking_budget: i32) -> GenerationCo
 // ── Public entry points ────────────────────────────────────────────────────────
 
 pub async fn run_once(config: &Config, prompt: &str, screenshot: Option<&str>) -> Result<()> {
-    let client = GeminiClient::new(config.clone());
+    let client = BackendClient::new(config)?;
 
     // Initialize MCP servers and integrations
     let mcp = Arc::new(McpRegistry::startup(&config.mcp_servers).await);
@@ -273,7 +297,7 @@ pub async fn run_once(config: &Config, prompt: &str, screenshot: Option<&str>) -
     }
 
     let mut history = vec![Content { role: "user".to_string(), parts }];
-    agentic_loop(&client, &mut history, config, Some(mcp), Some(integrations), &mut cost_tracker).await.map(|_| ())
+    agentic_loop(&client, &mut history, config, false, Some(mcp), Some(integrations), &mut cost_tracker).await.map(|_| ())
 }
 
 pub async fn run_interactive(config: &Config) -> Result<()> {
@@ -293,6 +317,7 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
     let mut thinking         = config.thinking;
     let mut thinking_budget  = config.thinking_budget;
     let mut auto_apply       = config.auto_apply;
+    let mut explain_exec     = config.explain_before_execute;
     let mut debug            = false;
     let mut session_tokens   = 0u32;
 
@@ -369,26 +394,65 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                     match parts.get(1).map(|s| s.trim()) {
                         Some("list") | Some("ls") => {
                             println!();
-                            let models = [
+                            println!("  {}:", "Gemini".cyan());
+                            let gemini_models = [
                                 ("gemini-2.5-pro",        "deep reasoning, 1M context, thinking"),
                                 ("gemini-2.5-flash",      "fastest recommended, thinking"),
-                                ("gemini-2.5-flash-lite",  "cheapest 2.5 model, $0.10/M input"),
-                                ("gemini-2.0-flash",      "previous generation, no thinking"),
-                                ("gemini-2.0-flash-lite", "lightest model, lowest cost"),
+                                ("gemini-2.5-flash-lite",  "cheapest 2.5, $0.10/M input"),
+                                ("gemini-2.0-flash",      "previous gen, no thinking"),
+                                ("gemini-2.0-flash-lite", "lightest, lowest cost"),
                             ];
-                            for (m, d) in models {
+                            for (m, d) in gemini_models {
                                 let marker = if m == current_model { "->".green() } else { " ".normal() };
                                 println!("  {} {:28} {}", marker, m.cyan(), d.dimmed());
                             }
+                            println!();
+                            println!("  {}:", "Claude".cyan());
+                            let claude = ["claude-4-opus", "claude-4-sonnet", "claude-3.5-sonnet"];
+                            for m in claude {
+                                let marker = if m == current_model { "->".green() } else { " ".normal() };
+                                println!("  {} {}", marker, m.cyan());
+                            }
+                            println!();
+                            println!("  {}:", "OpenAI".cyan());
+                            let openai = ["gpt-4.1", "gpt-4o", "o3", "o4-mini"];
+                            for m in openai {
+                                let marker = if m == current_model { "->".green() } else { " ".normal() };
+                                println!("  {} {}", marker, m.cyan());
+                            }
                         }
                         Some("info") => {
+                            let provider = backend::detect_provider(&current_model);
+                            let prov_name = match provider {
+                                Provider::Gemini => "Gemini",
+                                Provider::Anthropic => "Anthropic",
+                                Provider::OpenAI => "OpenAI",
+                            };
                             println!("{} {}", "Current model:".dimmed(), current_model.cyan());
+                            println!("{} {}", "Provider:".dimmed(), prov_name.dimmed());
                             println!("{} {}", "Context window:".dimmed(),
                                 format!("{}M tokens", config::context_window(&current_model) / 1_000_000).dimmed());
                         }
                         Some(model) if !model.is_empty() => {
-                            current_model = model.to_string();
-                            println!("{} {}", "Model:".dimmed(), current_model.cyan());
+                            let new_provider = backend::detect_provider(model);
+                            let current_provider = backend::detect_provider(&current_model);
+                            if new_provider != current_provider {
+                                let key_needed = match new_provider {
+                                    Provider::Anthropic => config.anthropic_api_key.is_none(),
+                                    Provider::OpenAI => config.openai_api_key.is_none(),
+                                    _ => false,
+                                };
+                                if key_needed {
+                                    println!("{} API key required for {}. Set via --anthropic-api-key / --openai-api-key or config.toml.", "!".yellow(), model);
+                                } else {
+                                    current_model = model.to_string();
+                                    println!("{} {} (provider: {})", "Model:".dimmed(), current_model.cyan(),
+                                        match new_provider { Provider::Gemini => "Gemini", Provider::Anthropic => "Claude", Provider::OpenAI => "OpenAI" }.dimmed());
+                                }
+                            } else {
+                                current_model = model.to_string();
+                                println!("{} {}", "Model:".dimmed(), current_model.cyan());
+                            }
                         }
                         _ => {
                             println!("{} {}", "Model:".dimmed(), current_model.cyan());
@@ -509,6 +573,32 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                 "/debug" => {
                     debug = !debug;
                     println!("{}", if debug { "Debug ON.".yellow().to_string() } else { "Debug OFF.".dimmed().to_string() });
+                }
+
+                "/explain" => {
+                    match parts.get(1).map(|s| s.trim()) {
+                        Some("on")  => { explain_exec = true;  println!("{}", "Explain-before-execute ON — agent will summarize planned actions before running.".green()); }
+                        Some("off") => { explain_exec = false; println!("{}", "Explain-before-execute OFF.".dimmed()); }
+                        _ => {
+                            explain_exec = !explain_exec;
+                            println!("{}", if explain_exec { "Explain-before-execute ON.".green().to_string() } else { "Explain-before-execute OFF.".dimmed().to_string() });
+                        }
+                    }
+                }
+
+                "/test-fix" => {
+                    let test_cmd = parts.get(1).map(|s| s.trim()).unwrap_or("cargo test");
+                    let max_cycles: u32 = parts.get(2).and_then(|s| s.trim().parse().ok()).unwrap_or(3);
+                    println!("{} Test-fix mode: '{}' (max {} cycles)", "[TEST]".cyan(), test_cmd, max_cycles);
+                    let active_cfg = active_config(config, &current_model, grounding, thinking, thinking_budget, auto_apply);
+                    match BackendClient::new(&active_cfg) {
+                        Ok(active_client) => {
+                            if let Err(e) = test_fix_loop(&active_client, &mut history, &active_cfg, test_cmd, max_cycles, Some(mcp.clone()), Some(integrations.clone()), &mut cost_tracker).await {
+                                ui::print_error(&e.to_string());
+                            }
+                        }
+                        Err(e) => ui::print_error(&e.to_string()),
+                    }
                 }
 
                 "/undo" => {
@@ -705,9 +795,13 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                                 ],
                             });
                             let active_cfg = active_config(config, &current_model, grounding, thinking, thinking_budget, auto_apply);
-                            let active_client = GeminiClient::new(active_cfg.clone());
-                            if let Err(e) = agentic_loop(&active_client, &mut history, &active_cfg, Some(mcp.clone()), Some(integrations.clone()), &mut cost_tracker).await {
-                                ui::print_error(&e.to_string());
+                            match BackendClient::new(&active_cfg) {
+                                Ok(active_client) => {
+                                    if let Err(e) = agentic_loop(&active_client, &mut history, &active_cfg, explain_exec, Some(mcp.clone()), Some(integrations.clone()), &mut cost_tracker).await {
+                                        ui::print_error(&e.to_string());
+                                    }
+                                }
+                                Err(e) => ui::print_error(&e.to_string()),
                             }
                         }
                         Err(e) => ui::print_error(&format!("Cannot load image '{}': {}", path, e)),
@@ -809,9 +903,12 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
         });
 
         let active_cfg = active_config(config, &current_model, grounding, thinking, thinking_budget, auto_apply);
-        let active_client = GeminiClient::new(active_cfg.clone());
+        let active_client = match BackendClient::new(&active_cfg) {
+            Ok(c) => c,
+            Err(e) => { ui::print_error(&e.to_string()); continue; }
+        };
 
-        match agentic_loop(&active_client, &mut history, &active_cfg, Some(mcp.clone()), Some(integrations.clone()), &mut cost_tracker).await {
+        match agentic_loop(&active_client, &mut history, &active_cfg, explain_exec, Some(mcp.clone()), Some(integrations.clone()), &mut cost_tracker).await {
             Ok(tokens) => {
                 session_tokens = session_tokens.saturating_add(tokens);
                 let window = config::context_window(&current_model);
@@ -886,15 +983,19 @@ fn active_config(
         mcp_servers:     base.mcp_servers.clone(),
         integrations:    base.integrations.clone(),
         daily_budget_usd: base.daily_budget_usd,
+        anthropic_api_key: base.anthropic_api_key.clone(),
+        openai_api_key: base.openai_api_key.clone(),
+        explain_before_execute: base.explain_before_execute,
     }
 }
 
 // ── Core agentic loop — returns total prompt tokens consumed ──────────────────
 
 async fn agentic_loop(
-    client:  &GeminiClient,
+    client:  &BackendClient,
     history: &mut Vec<Content>,
     config:  &Config,
+    explain_exec: bool,
     mcp: Option<Arc<McpRegistry>>,
     integrations: Option<Arc<IntegrationRegistry>>,
     cost_tracker: &mut CostTracker,
@@ -1071,6 +1172,24 @@ async fn agentic_loop(
 
         iterations += 1;
 
+        // ── Explain-before-execute ──────────────────────────────────────────
+        if explain_exec && !function_calls.is_empty() && !config.auto_apply {
+            println!();
+            println!("  {} Planned actions:", "[PLAN]".cyan());
+            for fc in &function_calls {
+                let args_summary = fmt_args_compact(&fc.args);
+                println!("    {} {} {}", "▸".cyan(), fc.name.yellow(), args_summary.dimmed());
+            }
+            print!("  {} Proceed? [Y/n] ", "?".yellow());
+            let _ = std::io::stdout().flush();
+            let mut ans = String::new();
+            let _ = std::io::stdin().read_line(&mut ans);
+            if ans.trim().to_lowercase() == "n" {
+                println!("  {} Execution skipped.", "✗".dimmed());
+                break;
+            }
+        }
+
         // ── ParallelOps ───────────────────────────────────────────────────────
         if function_calls.len() > 1 {
             println!(
@@ -1126,6 +1245,7 @@ async fn agentic_loop(
                 function_response: FunctionResponse {
                     name,
                     response: serde_json::json!({ "content": result.output }),
+                    id: None,
                 },
             });
         }
@@ -1215,7 +1335,7 @@ async fn compact_history(config: &Config, history: &[Content]) -> Result<String>
         transcript
     );
 
-    let client  = GeminiClient::new(config.clone());
+    let client  = BackendClient::new(config)?;
     let request = GenerateContentRequest {
         contents: vec![Content { role: "user".to_string(), parts: vec![Part::text(&prompt)] }],
         tools:    vec![],
@@ -1294,4 +1414,103 @@ fn fmt_args(args: &serde_json::Value) -> String {
         };
         format!("{}={}", k, val)
     }).collect::<Vec<_>>().join("  ")
+}
+
+fn fmt_args_compact(args: &serde_json::Value) -> String {
+    let Some(obj) = args.as_object() else { return args.to_string() };
+    let parts: Vec<String> = obj.iter().take(3).map(|(k, v)| {
+        let val = match v {
+            serde_json::Value::String(s) => {
+                let s = s.replace('\n', "↵");
+                if s.chars().count() > 40 {
+                    format!("{}…", s.chars().take(40).collect::<String>())
+                } else { s }
+            }
+            _ => v.to_string(),
+        };
+        format!("{}={}", k, val)
+    }).collect();
+    let mut s = parts.join(" ");
+    if obj.len() > 3 { s.push_str(" …"); }
+    s
+}
+
+// ── /test-fix loop ───────────────────────────────────────────────────────────
+
+async fn test_fix_loop(
+    client: &BackendClient,
+    history: &mut Vec<Content>,
+    config: &Config,
+    test_command: &str,
+    max_cycles: u32,
+    mcp: Option<Arc<McpRegistry>>,
+    integrations: Option<Arc<IntegrationRegistry>>,
+    cost_tracker: &mut CostTracker,
+) -> Result<()> {
+    for cycle in 1..=max_cycles {
+        println!(
+            "\n  {} Test-fix cycle {}/{} — running '{}'...",
+            "[TEST]".cyan(), cycle, max_cycles, test_command.dimmed()
+        );
+
+        let output = tokio::process::Command::new("sh")
+            .args(["-c", test_command])
+            .output().await;
+
+        match &output {
+            Ok(o) if o.status.success() => {
+                let stdout = String::from_utf8_lossy(&o.stdout);
+                println!("  {} All tests passed!", "[OK]".green());
+                if !stdout.trim().is_empty() {
+                    println!("{}", stdout.dimmed());
+                }
+                return Ok(());
+            }
+            Ok(o) => {
+                let stdout = String::from_utf8_lossy(&o.stdout);
+                let stderr = String::from_utf8_lossy(&o.stderr);
+                let combined = format!("{}\n{}", stdout, stderr);
+
+                // Truncate if too long (keep last 4000 chars — that's where failures are)
+                let truncated: String = if combined.len() > 4000 {
+                    let start = combined.len().saturating_sub(4000);
+                    format!("…(truncated)…\n{}", &combined[start..])
+                } else {
+                    combined.clone()
+                };
+
+                println!("  {} Tests FAILED. Feeding errors to model...", "[FAIL]".red());
+
+                let prompt = format!(
+                    "The test command '{}' failed. Here is the output:\n\n```\n{}\n```\n\n\
+                     Analyze the failures. Find the root cause(s). Fix the code. \
+                     Be surgical — only fix what's broken. Don't refactor passing code.\n\
+                     Key rules:\n\
+                     - Read the files that have failing tests before editing\n\
+                     - Make minimal changes to fix the errors\n\
+                     - Run cargo check after each file change\n\
+                     - Don't add new dependencies unless absolutely necessary",
+                    test_command, truncated
+                );
+
+                history.push(Content {
+                    role: "user".to_string(),
+                    parts: vec![Part::text(&prompt)],
+                });
+
+                let tokens = agentic_loop(client, history, config, false, mcp.clone(), integrations.clone(), cost_tracker).await?;
+                let _ = tokens;
+            }
+            Err(e) => {
+                println!("  {} Failed to run tests: {}", "[ERR]".red(), e);
+                return Err(anyhow::anyhow!("Test command failed: {}", e));
+            }
+        }
+    }
+
+    println!(
+        "\n  {} Test-fix loop ended after {} cycles — tests still failing.",
+        "[WARN]".yellow(), max_cycles
+    );
+    Ok(())
 }

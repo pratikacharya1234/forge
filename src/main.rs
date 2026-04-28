@@ -3,6 +3,7 @@ use clap::Parser;
 
 mod agent;
 mod audit;
+mod backend;
 mod config;
 mod diff_view;
 mod gemini;
@@ -61,6 +62,18 @@ struct Args {
     /// Attach a screenshot to the initial prompt (ScreenFix).
     #[clap(long)]
     screenshot: Option<String>,
+
+    /// Anthropic (Claude) API key.
+    #[clap(long, env = "ANTHROPIC_API_KEY")]
+    anthropic_api_key: Option<String>,
+
+    /// OpenAI API key.
+    #[clap(long, env = "OPENAI_API_KEY")]
+    openai_api_key: Option<String>,
+
+    /// Explain planned actions before executing tools.
+    #[clap(long)]
+    explain: bool,
 }
 
 #[tokio::main]
@@ -98,6 +111,9 @@ async fn main() -> Result<()> {
         mcp_servers:     file_cfg.mcp_servers,
         integrations:    file_cfg.integrations,
         daily_budget_usd: file_cfg.daily_budget_usd,
+        anthropic_api_key: args.anthropic_api_key.or(file_cfg.anthropic_api_key),
+        openai_api_key: args.openai_api_key.or(file_cfg.openai_api_key),
+        explain_before_execute: args.explain || file_cfg.explain_before_execute,
     };
 
     if let Some(prompt) = args.prompt {

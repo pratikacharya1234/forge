@@ -87,6 +87,10 @@ pub struct FunctionCall {
 pub struct FunctionResponse {
     pub name: String,
     pub response: serde_json::Value,
+    /// Tool call ID for Anthropic (tool_use_id) / OpenAI (tool_call_id) round-trips.
+    /// Populated when the backend provides an ID; used when building tool-result messages.
+    #[serde(skip)]
+    pub id: Option<String>,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -170,6 +174,7 @@ pub struct ApiError {
 
 // ── HTTP client ────────────────────────────────────────────────────────────────
 
+#[allow(dead_code)]
 pub struct GeminiClient {
     http: reqwest::Client,
     config: Config,
@@ -181,6 +186,7 @@ impl GeminiClient {
     }
 
     /// Non-streaming — used for /compact and SecuritySweep.
+    #[allow(dead_code)]
     pub async fn generate(
         &self,
         request: GenerateContentRequest,

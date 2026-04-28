@@ -112,6 +112,7 @@ fn deserialize_history(contents: &[SerializedContent]) -> Vec<Content> {
                         function_response: crate::gemini::FunctionResponse {
                             name: name.clone(),
                             response: serde_json::Value::String(response.clone()),
+                            id: None,
                         },
                     },
                 })
