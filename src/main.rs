@@ -10,6 +10,7 @@ mod gemini;
 mod integrations;
 mod mcp;
 mod models;
+mod orchestrator;
 mod project;
 mod safety;
 mod security;

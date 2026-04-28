@@ -213,6 +213,7 @@ pub fn print_help() {
         ("/explain [on|off]",          "show planned actions before executing"),
         ("",                            ""),
         // Code & Testing
+        ("/task <requirement>",         "full pipeline: research → decompose → dispatch → consensus"),
         ("/test-fix <cmd> [cycles]",    "test -> fix -> retest loop"),
         ("/pr <title>",                "push branch and create GitHub PR"),
         ("/compact",                   "summarize history to save tokens"),

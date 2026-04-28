@@ -12,6 +12,7 @@ use crate::gemini::*;
 use crate::integrations::IntegrationRegistry;
 use crate::mcp::McpRegistry;
 use crate::models;
+use crate::orchestrator;
 use crate::token_counter::CostTracker;
 use crate::tools::{self, ToolContext};
 use crate::{audit, project, security, session, snapshot, ui};
@@ -681,6 +682,30 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                             }
                         }
                         Err(e) => ui::print_error(&e.to_string()),
+                    }
+                }
+
+                "/task" => {
+                    let task_req = parts.get(1..).map(|s| s.join(" ")).unwrap_or_default();
+                    if task_req.is_empty() {
+                        println!("{}", "Usage: /task <requirement> — full pipeline: research → decompose → dispatch → consensus → merge".dimmed());
+                    } else {
+                        let active_cfg = active_config(config, &current_model, grounding, thinking, thinking_budget, auto_apply);
+                        let mut orch = orchestrator::TaskOrchestrator::new(&active_cfg);
+                        match orch.run(&task_req, Some(mcp.clone()), Some(integrations.clone())).await {
+                            Ok(report) => {
+                                // Add the task result to conversation history
+                                history.push(Content {
+                                    role: "user".to_string(),
+                                    parts: vec![Part::text(&format!("Task completed: {}", task_req))],
+                                });
+                                history.push(Content {
+                                    role: "model".to_string(),
+                                    parts: vec![Part::text(&report)],
+                                });
+                            }
+                            Err(e) => ui::print_error(&format!("Task orchestration failed: {}", e)),
+                        }
                     }
                 }
 
