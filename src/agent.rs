@@ -137,6 +137,7 @@ After EVERY code change, mentally verify:
 
 {model_hint}
 {project_context}
+{memory_context}
 Working directory: {cwd}
 "#;
 
@@ -179,6 +180,18 @@ fn model_hint(config: &Config) -> String {
     }
 }
 
+fn load_memory_context() -> String {
+    // Load .geminix/memory.md if it exists
+    let path = std::path::Path::new(".geminix/memory.md");
+    if let Ok(content) = std::fs::read_to_string(path) {
+        let trimmed = content.trim();
+        if !trimmed.is_empty() {
+            return format!("\n## Persistent Memory\n\nThe following facts, preferences, and conventions have been memorized. Follow them.\n\n{}\n", trimmed);
+        }
+    }
+    String::new()
+}
+
 fn load_project_context() -> String {
     // Look for .geminix/project.md in current dir
     let path = std::path::Path::new(".geminix/project.md");
@@ -208,6 +221,7 @@ fn system_prompt(config: &Config) -> String {
     SYSTEM_PROMPT_BASE
         .replace("{model_hint}", &model_hint(config))
         .replace("{project_context}", &load_project_context())
+        .replace("{memory_context}", &load_memory_context())
         .replace("{cwd}", &cwd_safe)
         + grounding_line
 }
@@ -420,6 +434,8 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                                 let marker = if m == current_model { "->".green() } else { " ".normal() };
                                 println!("  {} {}", marker, m.cyan());
                             }
+                            println!();
+                            println!("  {} /model auto — auto-select best model for each task", "Tip:".dimmed());
                         }
                         Some("info") => {
                             let provider = backend::detect_provider(&current_model);
@@ -432,6 +448,13 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                             println!("{} {}", "Provider:".dimmed(), prov_name.dimmed());
                             println!("{} {}", "Context window:".dimmed(),
                                 format!("{}M tokens", config::context_window(&current_model) / 1_000_000).dimmed());
+                        }
+                        Some("auto") => {
+                            println!("{} Auto-routing enabled. The agent will select the best model for each task.", "[AUTO]".cyan());
+                            println!("  {} complex tasks (refactor, architecture, security) → reasoning model", "▸".dimmed());
+                            println!("  {} normal tasks (fix, add, implement) → balanced model", "▸".dimmed());
+                            println!("  {} simple tasks (find, read, explain) → fast/cheap model", "▸".dimmed());
+                            current_model = "auto".to_string();
                         }
                         Some(model) if !model.is_empty() => {
                             let new_provider = backend::detect_provider(model);
@@ -456,7 +479,7 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                         }
                         _ => {
                             println!("{} {}", "Model:".dimmed(), current_model.cyan());
-                            println!("{}", "Usage: /model <name> | list | info".dimmed());
+                            println!("{}", "Usage: /model <name> | auto | list | info".dimmed());
                         }
                     }
                 }
@@ -573,6 +596,72 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                 "/debug" => {
                     debug = !debug;
                     println!("{}", if debug { "Debug ON.".yellow().to_string() } else { "Debug OFF.".dimmed().to_string() });
+                }
+
+                "/memorize" => {
+                    let fact = parts.get(1).map(|s| s.trim()).unwrap_or("");
+                    if fact.is_empty() {
+                        println!("{}", "Usage: /memorize <fact> — save a fact or preference to persistent memory".dimmed());
+                    } else {
+                        let now = chrono::Local::now();
+                        let entry = format!("- [{}] {}", now.format("%Y-%m-%d"), fact);
+                        let path = std::path::Path::new(".geminix/memory.md");
+                        let mut content = std::fs::read_to_string(path).unwrap_or_default();
+                        if !content.is_empty() && !content.ends_with('\n') { content.push('\n'); }
+                        content.push_str(&entry);
+                        content.push('\n');
+                        if let Err(e) = std::fs::write(path, &content) {
+                            println!("{} Failed to save: {}", "[ERR]".red(), e);
+                        } else {
+                            println!("{} {}", "[MEM]".magenta(), entry);
+                        }
+                    }
+                }
+
+                "/forget" => {
+                    let keyword = parts.get(1).map(|s| s.trim()).unwrap_or("");
+                    if keyword.is_empty() {
+                        println!("{}", "Usage: /forget <keyword> — remove matching entries from memory".dimmed());
+                    } else {
+                        let path = std::path::Path::new(".geminix/memory.md");
+                        match std::fs::read_to_string(path) {
+                            Ok(content) => {
+                                let filtered: Vec<&str> = content.lines()
+                                    .filter(|line| !line.to_lowercase().contains(&keyword.to_lowercase()))
+                                    .collect();
+                                let removed = content.lines().count() - filtered.len();
+                                if removed == 0 {
+                                    println!("{} No entries matching '{}'", "[MEM]".magenta(), keyword);
+                                } else {
+                                    let new_content = filtered.join("\n") + "\n";
+                                    if let Err(e) = std::fs::write(path, &new_content) {
+                                        println!("{} Failed to update: {}", "[ERR]".red(), e);
+                                    } else {
+                                        println!("{} Removed {} entr{} matching '{}'", "[MEM]".magenta(), removed, if removed == 1 { "y" } else { "ies" }, keyword);
+                                    }
+                                }
+                            }
+                            Err(_) => {
+                                println!("{} No memory file found.", "[MEM]".magenta());
+                            }
+                        }
+                    }
+                }
+
+                "/memory" => {
+                    let path = std::path::Path::new(".geminix/memory.md");
+                    match std::fs::read_to_string(path) {
+                        Ok(content) if !content.trim().is_empty() => {
+                            println!("\n{} Persistent Memory:", "[MEM]".magenta());
+                            for line in content.lines() {
+                                if !line.trim().is_empty() {
+                                    println!("  {}", line.dimmed());
+                                }
+                            }
+                            println!();
+                        }
+                        _ => println!("{} No memories yet. Use {} to add one.", "[MEM]".magenta(), "/memorize <fact>".cyan()),
+                    }
                 }
 
                 "/explain" => {
@@ -897,12 +986,23 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
         }
 
         // ── Regular message ────────────────────────────────────────────────────
+        let message_text = line;
+
+        // Auto-routing: select best model based on task complexity
+        let effective_model = if current_model == "auto" {
+            let (model, reason) = auto_route_model(config, &message_text);
+            println!("  {} routed to {} — {}", "[AUTO]".cyan(), model.yellow(), reason.dimmed());
+            model.to_string()
+        } else {
+            current_model.clone()
+        };
+
         history.push(Content {
             role:  "user".to_string(),
-            parts: vec![Part::text(line)],
+            parts: vec![Part::text(message_text)],
         });
 
-        let active_cfg = active_config(config, &current_model, grounding, thinking, thinking_budget, auto_apply);
+        let active_cfg = active_config(config, &effective_model, grounding, thinking, thinking_budget, auto_apply);
         let active_client = match BackendClient::new(&active_cfg) {
             Ok(c) => c,
             Err(e) => { ui::print_error(&e.to_string()); continue; }
@@ -1433,6 +1533,75 @@ fn fmt_args_compact(args: &serde_json::Value) -> String {
     let mut s = parts.join(" ");
     if obj.len() > 3 { s.push_str(" …"); }
     s
+}
+
+// ── Auto model routing ──────────────────────────────────────────────────────
+
+/// Classify task complexity and return (model_name, reason).
+/// Falls back to available providers based on configured API keys.
+fn auto_route_model(config: &Config, message: &str) -> (&'static str, &'static str) {
+    let lower = message.to_lowercase();
+
+    // Complexity signals — high → reasoning model
+    let complex_signals = [
+        "refactor", "architecture", "migrate", "rewrite", "redesign",
+        "security audit", "vulnerability", "optimize", "scale", "multi-thread",
+        "async", "concurrent", "race condition", "deadlock", "memory leak",
+        "design pattern", "microservice", "distributed", "database schema",
+        "api design", "system design", "protocol", "encryption", "auth",
+        "jwt", "oauth", "deploy", "ci/cd", "pipeline",
+    ];
+
+    // Simple signals — low → fast/cheap model
+    let simple_signals = [
+        "what is", "how do", "explain", "show me", "list", "find",
+        "read", "check", "describe", "tell me", "lookup", "where is",
+        "document", "search for", "grep", "locate",
+    ];
+
+    let complexity = if complex_signals.iter().any(|s| lower.contains(s)) {
+        "high"
+    } else if simple_signals.iter().any(|s| lower.starts_with(s)) {
+        "low"
+    } else {
+        "medium"
+    };
+
+    // Pick the best available model
+    let has_anthropic = config.anthropic_api_key.as_deref().map_or(false, |k| !k.is_empty());
+    let has_openai = config.openai_api_key.as_deref().map_or(false, |k| !k.is_empty());
+
+    match complexity {
+        "high" => {
+            if has_anthropic {
+                ("claude-4-sonnet", "complex task → Claude balanced reasoning")
+            } else if has_openai {
+                ("o3", "complex task → OpenAI reasoning")
+            } else {
+                ("gemini-2.5-pro", "complex task → Gemini deep reasoning")
+            }
+        }
+        "low" => {
+            // Cheapest available option
+            if has_openai {
+                ("gpt-4o", "simple task → GPT fast/affordable")
+            } else if has_anthropic {
+                ("claude-4-sonnet", "simple task → Claude")
+            } else {
+                ("gemini-2.5-flash-lite", "simple task → cheapest Gemini")
+            }
+        }
+        _ => {
+            // Medium complexity — balanced
+            if has_anthropic {
+                ("claude-4-sonnet", "normal task → Claude")
+            } else if has_openai {
+                ("gpt-4.1", "normal task → GPT balanced")
+            } else {
+                ("gemini-2.5-flash", "normal task → Gemini balanced")
+            }
+        }
+    }
 }
 
 // ── /test-fix loop ───────────────────────────────────────────────────────────
