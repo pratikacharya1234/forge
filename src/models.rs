@@ -303,3 +303,51 @@ pub fn resolve_best_openai(models: &[(String, String)]) -> String {
     }
     models.first().map(|(id, _)| id.clone()).unwrap_or_else(|| "gpt-4o".to_string())
 }
+
+/// Pick a fallback model when the current one fails (rate limit, auth error, etc).
+/// Returns (model_name, api_key). Tries: same-provider alternative → different provider.
+pub fn pick_fallback_model(current: &str, config: &crate::config::Config) -> (String, String) {
+    let gemini_key = std::env::var("GEMINI_API_KEY")
+        .or_else(|_| std::env::var("FORGE_API_KEY"))
+        .unwrap_or_else(|_| config.api_key.clone());
+    let anthropic_key: String = std::env::var("ANTHROPIC_API_KEY")
+        .unwrap_or_else(|_| config.anthropic_api_key.clone().unwrap_or_default());
+    let openai_key: String = std::env::var("OPENAI_API_KEY")
+        .unwrap_or_else(|_| config.openai_api_key.clone().unwrap_or_default());
+
+    let current_lower = current.to_lowercase();
+    let is_gemini = current_lower.contains("gemini");
+    let is_claude = current_lower.contains("claude");
+    let is_gpt = current_lower.contains("gpt") || current_lower.contains("o3") || current_lower.contains("o4");
+
+    // Same-provider fallback first
+    if is_gemini && !gemini_key.is_empty() {
+        if current_lower.contains("pro") {
+            return ("gemini-2.5-flash".into(), gemini_key);
+        } else {
+            return ("gemini-2.0-flash".into(), gemini_key);
+        }
+    }
+
+    if is_claude && !anthropic_key.is_empty() {
+        return ("claude-sonnet-4-20250514".into(), anthropic_key);
+    }
+
+    if is_gpt && !openai_key.is_empty() {
+        return ("gpt-4.1".into(), openai_key);
+    }
+
+    // Cross-provider fallback: prefer Gemini (free) > Claude > GPT
+    if !gemini_key.is_empty() && !is_gemini {
+        return ("gemini-2.5-flash".into(), gemini_key);
+    }
+    if !anthropic_key.is_empty() && !is_claude {
+        return ("claude-sonnet-4-20250514".into(), anthropic_key);
+    }
+    if !openai_key.is_empty() && !is_gpt {
+        return ("gpt-4.1".into(), openai_key);
+    }
+
+    // No fallback available — return current (will fail)
+    (current.to_string(), gemini_key)
+}

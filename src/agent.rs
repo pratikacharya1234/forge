@@ -1289,7 +1289,7 @@ async fn agentic_loop(
             generation_config:  Some(build_generation_config(config.thinking, config.thinking_budget)),
         };
 
-        // ── Streaming ─────────────────────────────────────────────────────────
+        // ── Streaming with auto-fallback ────────────────────────────────────
         let first_text     = std::cell::Cell::new(true);
         let thought_active = std::cell::Cell::new(false);
         let thought_buf    = std::cell::RefCell::new(String::new());
@@ -1328,11 +1328,62 @@ async fn agentic_loop(
             let _ = std::io::stdout().flush();
         };
 
-        let response = tokio::select! {
-            res = client.generate_streaming(&request, &mut on_text, &mut on_thought) => res?,
-            _ = tokio::signal::ctrl_c() => {
-                println!("\n{}", "Interrupted.".yellow().dimmed());
-                return Ok(total_prompt_tokens);
+        // ── API call with model fallback ──────────────────────────────────────
+        let mut fallback_attempt = 0u32;
+        let max_fallbacks = 3u32;
+        let mut fallback_client: Option<BackendClient> = None;
+        let mut current_client = client;
+        let mut current_model: std::borrow::Cow<str> = std::borrow::Cow::Borrowed(&config.model);
+
+        let response = loop {
+            let result = tokio::select! {
+                res = current_client.generate_streaming(&request, &mut on_text, &mut on_thought) => res,
+                _ = tokio::signal::ctrl_c() => {
+                    println!("\n{}", "Interrupted.".yellow().dimmed());
+                    return Ok(total_prompt_tokens);
+                }
+            };
+
+            match result {
+                Ok(resp) => break resp,
+                Err(e) => {
+                    let err_str = e.to_string();
+                    let is_rate_limited = err_str.contains("429") || err_str.contains("RESOURCE_EXHAUSTED")
+                        || err_str.contains("rate") || err_str.contains("quota");
+                    let is_auth_error = err_str.contains("401") || err_str.contains("403")
+                        || err_str.contains("UNAUTHENTICATED") || err_str.contains("PERMISSION_DENIED");
+                    let is_retryable = is_rate_limited || is_auth_error
+                        || err_str.contains("500") || err_str.contains("503")
+                        || err_str.contains("UNAVAILABLE") || err_str.contains("INTERNAL");
+
+                    if fallback_attempt >= max_fallbacks || !is_retryable {
+                        return Err(e);
+                    }
+
+                    fallback_attempt += 1;
+                    let (new_model, new_key) = models::pick_fallback_model(&current_model, config);
+
+                    if new_model == current_model.as_ref() {
+                        return Err(e);
+                    }
+
+                    println!(
+                        "  {} Model {} {} — switching to {}",
+                        "[FALLBACK]".yellow(),
+                        current_model.as_ref().dimmed(),
+                        if is_rate_limited { "rate limited".red() } else { "failed".red() },
+                        new_model.bright_green()
+                    );
+
+                    let fallback_cfg = crate::config::Config {
+                        model: new_model.clone(),
+                        api_key: new_key.clone(),
+                        ..config.clone()
+                    };
+                    current_model = std::borrow::Cow::Owned(new_model);
+                    fallback_client = Some(BackendClient::new(&fallback_cfg)?);
+                    current_client = fallback_client.as_ref().unwrap();
+                }
             }
         };
 

@@ -1,6 +1,7 @@
 # FORGE
 
 <p align="center">
+  <img src="https://img.shields.io/badge/price-FREE-green.svg" alt="100% Free">
   <img src="https://img.shields.io/badge/version-0.0.1-blue.svg" alt="Version 0.0.1">
   <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License">
   <img src="https://img.shields.io/badge/rust-1.75%2B-orange.svg" alt="Rust 1.75+">
@@ -41,7 +42,30 @@ FORGE is the **only** coding agent that:
 | **Interface** | Terminal | Terminal | VS Code | VS Code |
 | **MCP support** | Yes | Yes | Yes | No |
 | **Native integrations** | GitHub, Discord, Gmail, Drive | GitHub | None | GitHub |
-| **Privacy** | Your machine | Their servers | Their servers | Their servers |
+| **Free tier** | ✅ Gemini 1,500 req/day | ❌ | ❌ | ❌ |
+
+## 💯 100% Free — No Credit Card, No Subscription
+
+FORGE works with **Gemini's free tier**. That means:
+
+- ✅ **0 dollars.** Forever. No trial that expires.
+- ✅ **1,500 requests per day** on Gemini Flash — more than enough for heavy coding sessions
+- ✅ **1 MILLION token context window** — 5x Claude Code, 15x Copilot
+- ✅ **No rate limit anxiety** — you're on your own API key, not someone's quota
+- ✅ **Pay only if you want to** — add Claude or GPT keys for complex tasks, keep Gemini for everything else
+
+**Get your free key in 30 seconds:**
+1. Go to https://aistudio.google.com/apikey
+2. Click "Create API Key"
+3. Copy it. That's it. No billing setup. No credit card.
+
+```bash
+export GEMINI_API_KEY="your-free-key-here"
+forge-cli
+# That's it. You're coding with AI. For free.
+```
+
+> **Why this matters:** Claude Code costs $20-200/month plus per-token usage. Users report spending $25 in a single session. Cursor costs $20/month. Copilot costs $10/month. FORGE costs nothing. Use the free Gemini tier for 90% of your work, add Claude only when you need it, switch back anytime. No lock-in. No subscription to cancel.
 
 ## Quick Start
 
@@ -54,8 +78,10 @@ git clone https://github.com/pratikacharya1234/forge.git
 cd forge
 cargo build --release
 
-# Get a free API key and run
-export FORGE_API_KEY="your-gemini-key"
+# Get a free API key (30 seconds, no credit card)
+# → https://aistudio.google.com/apikey
+
+export GEMINI_API_KEY="your-free-key"
 forge-cli
 ```
 
