@@ -2,6 +2,17 @@
 
 All notable changes to FORGE are documented in this file.
 
+## [0.0.2] — Unreleased
+
+### Added
+- **Model auto-fallback:** Automatically switches to an alternative model when the current one hits rate limits, auth errors, or server failures. Falls back: same-provider → cross-provider (Gemini free tier preferred).
+- **Gemini free tier indicator:** Cost display now shows "FREE (Gemini tier)" when using Gemini models — no more "$0.0000" making you wonder if you're being charged.
+- **Free tier guide in README:** Prominent section explaining how FORGE is 100% free with Gemini's 1,500 req/day tier. Zero credit card. Zero subscription.
+- **Demo script:** `demo.sh` — runs a live 2-minute FORGE demo showing code generation and testing.
+
+### Changed
+- Updated comparison table with "Free tier" row
+
 ## [0.0.1] — 2026-04-28
 
 ### First Public Release

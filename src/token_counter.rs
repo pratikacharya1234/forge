@@ -312,6 +312,7 @@ impl CostTracker {
     }
 
     pub fn format_status(&self) -> String {
+        let is_gemini_free = self.model.to_lowercase().contains("gemini");
         let pct = if let Some(budget) = self.budget_usd {
             if budget > 0.0 {
                 format!(" ({:.0}%)", (self.budget_used / budget) * 100.0)
@@ -322,9 +323,15 @@ impl CostTracker {
             String::new()
         };
 
+        let cost_str = if is_gemini_free && self.budget_used < 0.0001 {
+            "FREE (Gemini tier)".to_string()
+        } else {
+            format!("${:.4}", self.budget_used)
+        };
+
         format!(
-            "Session: ${:.4}{}  Input: {}K  Output: {}K  Thinking: {}K  Turns: {}",
-            self.budget_used,
+            "Session: {}{}  Input: {}K  Output: {}K  Thinking: {}K  Turns: {}",
+            cost_str,
             pct,
             self.session_input_tokens / 1000,
             self.session_output_tokens / 1000,

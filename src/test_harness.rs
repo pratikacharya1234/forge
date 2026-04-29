@@ -115,7 +115,7 @@ mod token_counter_tests {
     fn cost_tracker_starts_at_zero() {
         let tracker = CostTracker::new("gemini-2.5-flash", None);
         let status = tracker.format_status();
-        assert!(status.contains("$0.00") || status.contains("0.0"));
+        assert!(status.contains("FREE") || status.contains("$0.00") || status.contains("0.0"));
     }
 
     #[test]
