@@ -1,117 +1,93 @@
-# GeminiX
+# FORGE
 
 <p align="center">
-  <b>The open-source, multi-model terminal coding agent. 1M token context. Free.</b>
-</p>
-
-<p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
-  <a href="#"><img src="https://img.shields.io/badge/rust-1.75%2B-orange.svg" alt="Rust 1.75+"></a>
-  <a href="#"><img src="https://img.shields.io/badge/context-1M%20tokens-green.svg" alt="1M Token Context"></a>
-  <a href="#"><img src="https://img.shields.io/badge/models-Gemini%20%7C%20Claude%20%7C%20GPT-purple.svg" alt="Multi-model"></a>
+  <img src="https://img.shields.io/badge/version-1.0.0-blue.svg" alt="Version 1.0.0">
+  <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License">
+  <img src="https://img.shields.io/badge/rust-1.75%2B-orange.svg" alt="Rust 1.75+">
+  <img src="https://img.shields.io/badge/context-1M%20tokens-green.svg" alt="1M Token Context">
+  <img src="https://img.shields.io/badge/models-Gemini%20%7C%20Claude%20%7C%20GPT-purple.svg" alt="Multi-model">
+  <img src="https://img.shields.io/badge/binary-12MB-lightgrey.svg" alt="Binary 12MB">
 </p>
 
 ---
 
-GeminiX is a terminal AI coding agent that reads, writes, and edits code; runs shell commands; searches your codebase; executes tests; and iterates until the job is done. Streaming output, multi-model support, 1 million token context window — all in a single Rust binary.
+**FORGE** is the open-source, multi-model terminal AI coding agent. 1M token context. Built in Rust. Works with Gemini, Claude, and GPT — routing each task to the best model automatically. Free. No subscriptions. No lock-in.
 
-**Why it exists:** Claude Code costs money. Cursor is tied to VS Code. Most coding agents lock you into one model. GeminiX is free, open-source, multi-model, and works anywhere you have a terminal.
+### What Makes FORGE Different
 
-## What Makes It Different
+FORGE is the **only** coding agent that:
+- **Decomposes tasks and dispatches subtasks to different AI models** based on difficulty
+- **Runs parallel subagents** — critical work goes to reasoning models, routine work to fast models
+- **Verifies critical changes with a second model** — cross-provider consensus checking
+- **Auto-researches before coding** — web searches for docs, APIs, and best practices first
+- **Auto-escalates** — starts with the cheapest model, upgrades automatically on failure
 
-| | GeminiX | Claude Code | Cursor | Copilot |
+### Comparison
+
+| | FORGE | Claude Code | Cursor | Copilot |
 |---|---|---|---|---|
 | **Price** | Free | $20-200/mo | $20/mo | $10/mo |
-| **Open source** | ✅ MIT | ❌ | ❌ | ❌ |
+| **Open source** | MIT | Proprietary | Proprietary | Proprietary |
 | **Multi-model** | Gemini + Claude + GPT | Claude only | Multi-model | GPT only |
 | **Max context** | 1M tokens | 200K | ~200K | ~64K |
+| **Task decomposition** | Automatic + multi-model | Manual subagents | No | No |
+| **Consensus verification** | Cross-provider | No | No | No |
+| **Auto-escalation** | Yes | No | No | No |
+| **Pre-execution research** | Yes | No | No | No |
 | **Interface** | Terminal | Terminal | VS Code | VS Code |
-| **MCP support** | ✅ | ✅ | ✅ | ❌ |
-| **Native integrations** | GitHub, Discord, Gmail, Drive | GitHub | ❌ | GitHub |
-| **Privacy** | Your machine, your keys | Their servers | Their servers | Their servers |
-| **Binary size** | 11MB | ~100MB+ | N/A | N/A |
+| **MCP support** | Yes | Yes | Yes | No |
+| **Native integrations** | GitHub, Discord, Gmail, Drive | GitHub | None | GitHub |
+| **Privacy** | Your machine | Their servers | Their servers | Their servers |
 
 ## Quick Start
 
-### One-liner install
-
 ```bash
-curl -fsSL https://raw.githubusercontent.com/pratikacharya1234/geminix/main/install.sh | bash
+# One-liner install
+curl -fsSL https://raw.githubusercontent.com/pratikacharya1234/forge/main/install.sh | bash
+
+# Or clone and build
+git clone https://github.com/pratikacharya1234/forge.git
+cd forge
+cargo build --release
+
+# Get a free API key and run
+export FORGE_API_KEY="your-gemini-key"
+forge
 ```
 
-### Manual install
-
-```bash
-git clone https://github.com/pratikacharya1234/geminix.git
-cd geminix
-bash install.sh
-```
-
-### Run
-
-```bash
-# Get a free API key → https://aistudio.google.com/apikey
-export GEMINI_API_KEY="your-key"
-geminix
-```
-
-Or with other models:
-
-```bash
-# Claude (requires Anthropic API key)
-geminix --model claude-4-sonnet --anthropic-api-key "sk-ant-..."
-
-# GPT (requires OpenAI API key)
-geminix --model gpt-4.1 --openai-api-key "sk-..."
-```
-
-## Usage Examples
+## Usage
 
 ```bash
 # Interactive session
-geminix
+forge
 
-# Single prompt, exit after
-geminix --prompt "add rate limiting to the API endpoints"
+# Full task pipeline — research, decompose, dispatch, verify
+forge --prompt "/task add rate limiting to the API endpoints"
 
-# With thinking mode (Gemini 2.5+)
-geminix --think --model gemini-2.5-pro
+# With specific models
+forge --model claude-4-sonnet --anthropic-api-key "sk-ant-..."
+forge --model gpt-4.1 --openai-api-key "sk-..."
+forge --model auto     # auto-select best model per task
 
-# Google Search grounding
-geminix --grounding --prompt "what's the latest tokio API for graceful shutdown"
+# With thinking mode and web grounding
+forge --think --grounding --model gemini-2.5-pro
 
-# Auto-apply changes (skip diff review, CI mode)
-geminix --auto-apply --prompt "fix all compiler warnings"
+# Single prompt, auto-apply, exit
+forge --auto-apply --prompt "fix all compiler warnings"
 
-# Screenshot-based bug fixing
-geminix --screenshot bug-report.png
-
-# Auto model routing — picks best model per task
-geminix --model auto
+# Test-fix loop
+forge --prompt "/test-fix 'cargo test' 5"
 ```
 
-## Command Reference
+## Key Commands
 
-### Session Controls
+### Orchestration
 | Command | Action |
 |---|---|
-| `/model <name>` | Switch model (gemini-2.5-pro, claude-4-sonnet, gpt-4.1, etc.) |
-| `/model auto` | Auto-select best model per task |
-| `/model list` | List all available models |
-| `/think [on\|off\|budget]` | Toggle thinking/reasoning mode |
-| `/grounding [on\|off]` | Toggle Google Search grounding |
-| `/explain [on\|off]` | Show planned actions before executing |
-| `/apply [on\|off]` | Toggle auto-apply file changes |
-| `/compact` | Summarize and free context |
-
-### Code & Testing
-| Command | Action |
-|---|---|
-| `/test-fix [cmd] [cycles]` | Test → fix → test loop until passing |
-| `/diff` | Show unified diff of last change |
-| `/undo [N]` | Undo last N file changes |
-| `/snapshot` | Capture current state |
-| `/rollback` | Restore from snapshot |
+| `/task <requirement>` | Full pipeline: research → decompose → dispatch → consensus |
+| `/test-fix <cmd> [N]` | Run tests, fix failures, retry until passing |
+| `/model <name\|auto>` | Switch or auto-route models |
+| `/explain [on\|off]` | Preview planned actions before executing |
 
 ### Memory & Context
 | Command | Action |
@@ -119,174 +95,49 @@ geminix --model auto
 | `/memorize <fact>` | Save fact to persistent memory |
 | `/forget <keyword>` | Remove entries from memory |
 | `/memory` | View all memorized facts |
+| `/compact` | Summarize history to free context |
 | `/load [dir]` | Load directory tree into context |
-| `/learn <repo-url>` | Clone and analyze a repo |
 
-### Sessions & History
+### Code & Safety
 | Command | Action |
 |---|---|
-| `/session save <name>` | Save conversation to disk |
-| `/session load <name>` | Restore saved session |
-| `/session list` | List saved sessions |
-| `/tokens` | View token usage |
-| `/history [N]` | Show conversation history |
+| `/undo [N]` | Revert last N file changes |
+| `/diff` | Show pending change list |
+| `/snapshot` / `/rollback` | Create or restore git snapshots |
+| `/tokens` | View context window usage |
 | `/cost` | Show session cost |
-| `/profile <name>` | Load named config profile |
+| `/security` | Full security sweep |
 
-### Integrations & Security
+### Sessions & Integration
 | Command | Action |
 |---|---|
-| `/pr` | Auto-create GitHub PR |
-| `/security` | Run full security sweep |
+| `/session save\|load\|list` | Manage saved sessions |
+| `/history [N]` | Show conversation history |
+| `/profile <name>` | Apply config profile |
+| `/pr <title>` | Auto-create GitHub PR |
 | `/screenshot <path>` | Vision-based code analysis |
-| `/audit [N]` | View audit log |
-| `/debug` | Toggle debug output |
 
-### Navigation
-| Command | Action |
-|---|---|
-| `/cd <path>` | Change working directory |
-| `/save <file>` | Save transcript to file |
-| `/quit` or `/exit` | End session |
-| `/help` | Show help |
-
-## Safety System
-
-GeminiX classifies every operation:
-
-| Level | Behavior | Examples |
-|---|---|---|
-| **Allow** | Runs immediately | `cargo check`, `ls`, `grep` |
-| **Warn** | Runs with notice | `curl`, `wget`, `npm install` |
-| **Confirm** | Asks before running | `rm`, `mv`, `git push` |
-| **Deny** | Blocked entirely | `rm -rf /`, `> /dev/sda`, `curl \| bash` |
-
-Per-project overrides in `.geminix/safety.toml`:
-
-```toml
-[permissions]
-destructive_commands = "confirm"
-sudo_commands = "deny"
-publish_commands = "confirm"
-
-[trusted_commands]
-allow = ["cargo check", "cargo build", "cargo test"]
-
-[blocked_commands]
-deny = ["rm -rf /"]
-```
-
-## Architecture
-
-```
-src/
-  main.rs           CLI entry point, argument parsing
-  agent.rs          Agentic loop, slash commands, streaming (1685 lines)
-  backend.rs        Multi-model backend: Gemini, Anthropic, OpenAI (1215 lines)
-  gemini.rs         Gemini API types + client
-  tools.rs          16 built-in tools + dispatch (887 lines)
-  safety.rs         4-level risk classifier + policy engine + per-project config
-  diff_view.rs      Unified diff + per-hunk interactive review
-  snapshot.rs       In-memory undo/redo stack
-  session.rs        Binary session save/restore persistence
-  token_counter.rs  Cost tracking + budget management
-  audit.rs          JSON audit logging
-  config.rs         Config loading, profiles, context windows
-  project.rs        Directory loading, git clone for /learn
-  security.rs       Security sweep: cargo/npm audit, secret scan, CVE analysis
-  ui.rs             Terminal UI, help output, context bar
-  mcp.rs            MCP client: JSON-RPC 2.0 over stdio (572 lines)
-  models.rs         Model resolution and discovery
-  integrations/
-    mod.rs          Registry + dispatch
-    github.rs       12 GitHub API tools (639 lines)
-    discord.rs      7 Discord API tools (409 lines)
-    google.rs       OAuth2 engine + 7 Drive + 7 Gmail tools (992 lines)
-```
-
-## Features
-
-### Agentic Loop
-- Streaming output with real-time token display
-- Thinking/reasoning token visualization
-- Parallel tool execution via Tokio
-- Configurable iteration limits with pause/resume
-- Per-hunk diff review (accept/reject/skip individual changes)
-- Stuck detection: pauses after 3 consecutive identical errors
-- In-memory undo stack
-
-### Multi-Model Support
-- Gemini 2.5 Pro/Flash/Lite, 2.0 Flash
-- Claude 4 Opus/Sonnet, Claude 3.5 Sonnet
-- GPT-4.1, GPT-4o, o3, o4-mini
-- Auto-routing: picks best model based on task complexity
-- Provider-aware model hints in system prompt
-- SSE streaming with proper tool call round-trips per provider
-
-### Built-in Tools (16)
-`read_file`, `write_file`, `edit_file` (fuzzy matching + occurrence), `append_file`, `bash` (streaming), `list_files`, `search_files` (regex), `glob`, `create_directory`, `delete_file`, `move_file`, `copy_file`, `url_fetch` (cached), `git_snapshot`
-
-### Native Integrations (33 tools)
-- **GitHub:** repos, issues, PRs, code search, branches (12 tools)
-- **Discord:** messages, channels, guilds, embeds (7 tools)
-- **Google Drive:** files, folders, upload, search (7 tools)
-- **Gmail:** send, list, search, labels (7 tools)
-
-### MCP Support
-Full JSON-RPC 2.0 MCP client (protocol 2025-03-26) over stdio. Auto-discovers tools from any MCP-compliant server. Parallel startup with timeout safety.
-
-### Context & Memory
-- 1M token context window (Gemini 2.5 models)
-- Auto-compaction at configurable threshold
-- Persistent memory via `/memorize` and `/forget`
-- Project instructions via `.geminix/project.md`
-
-### Testing & Quality
-- Test-fix loop: run tests → detect failures → fix → repeat
-- Explain-before-execute: preview planned actions
-- Auto-apply mode for CI/CD pipelines
-- Context window progress bar with warnings
-
-### Security
-- 4-level risk classification
-- Per-project safety policy overrides
-- Pipe-to-shell detection
-- Security sweep: cargo audit + npm audit + secret scan + CVE analysis
-- All API keys from env vars, never hardcoded
-
-### Profiles & Cost
-- Named configuration profiles
-- Per-model cost tracking with USD display
-- Daily budget support with warnings
-- `/cost` command for session stats
+Full list: `/help`
 
 ## Configuration
 
-`~/.geminix/config.toml`:
+`~/.forge/config.toml`:
 
 ```toml
 api_key = "AIza..."
 model = "gemini-2.5-flash"
 daily_budget_usd = 5.00
 
-[thinking]
-enabled = false
-budget = 8000
-
 # Multi-model keys
 anthropic_api_key = "sk-ant-..."
 openai_api_key = "sk-..."
 
+[thinking]
+enabled = false
+budget = 8000
+
 [integrations.github]
 token = "ghp_..."
-
-[integrations.discord]
-bot_token = "..."
-
-[integrations.google]
-client_id = "..."
-client_secret = "..."
-refresh_token = "..."
 
 [mcp_servers.postgres]
 command = "npx"
@@ -299,48 +150,74 @@ grounding = true
 daily_budget_usd = 10.0
 ```
 
-## Prerequisites
+Per-project: `.forge/project.md` (instructions), `.forge/safety.toml` (permissions), `.forge/memory.md` (persistent facts).
 
-- Rust 1.75+ (for source builds)
-- A Gemini, Anthropic, or OpenAI API key
-- Optional: `gh` CLI, `cargo-audit`, `npm` for security sweeps
+## Architecture
 
-## Build
-
-```bash
-git clone https://github.com/pratikacharya1234/geminix.git
-cd geminix
-cargo build --release
-# Binary: target/release/geminix (11MB)
+```
+src/
+  main.rs            CLI entry point (127 lines)
+  agent.rs           Agentic loop, slash commands, streaming (1704 lines)
+  backend.rs         Multi-model dispatch: Gemini, Anthropic, OpenAI (1215 lines)
+  orchestrator.rs    Task decomposition, parallel subagents, consensus (919 lines)
+  types.rs           Canonical message types (Content, Part, FunctionCall) (341 lines)
+  tools.rs           16 built-in tools + dispatch (887 lines)
+  safety.rs          4-level risk classifier + per-project policy engine (315 lines)
+  diff_view.rs       Unified diff + per-hunk interactive review (308 lines)
+  snapshot.rs        In-memory undo/redo stack (58 lines)
+  session.rs         Binary session persistence (259 lines)
+  token_counter.rs   Cost tracking + budget management (235 lines)
+  audit.rs           JSON audit logging (60 lines)
+  config.rs          Config loading, profiles, context windows (172 lines)
+  project.rs         Directory loading, git clone (146 lines)
+  security.rs        Security sweep: audit + secret scan + CVE analysis (285 lines)
+  ui.rs              Terminal UI, help, context bar (329 lines)
+  mcp.rs             MCP client: JSON-RPC 2.0 over stdio (572 lines)
+  models.rs          Model resolution and discovery (147 lines)
+  integrations/
+    mod.rs           Registry + dispatch (163 lines)
+    github.rs        12 GitHub API tools (639 lines)
+    discord.rs       7 Discord API tools (409 lines)
+    google.rs        OAuth2 engine + 7 Drive + 7 Gmail tools (992 lines)
 ```
 
-Or use the installer:
+## Features
 
-```bash
-bash install.sh
+### Agentic Loop
+Streaming output with real-time token display. Thinking/reasoning token visualization. Parallel tool execution. Configurable iteration limits. Auto-apply mode. Per-hunk diff review. Stuck detection after 3 consecutive errors. In-memory undo stack.
 
-# Options:
-bash install.sh --dir /usr/local/bin    # custom install path
-bash install.sh --version 1.0.0         # specific version
-GEMINIX_FROM_SOURCE=1 bash install.sh   # force source build
-```
+### Multi-Model Support
+Gemini 2.5 Pro/Flash/Lite, Claude 4 Opus/Sonnet, GPT-4.1/GPT-4o/o3/o4-mini. Auto-routing by task complexity. Provider-aware model hints. SSE streaming with proper tool call round-trips per provider.
 
-Prebuilt binaries available on [GitHub Releases](https://github.com/pratikacharya1234/geminix/releases).
+### Task Orchestrator
+5-phase pipeline: Research (auto web-search) → Decompose (break into subtasks) → Dispatch (route to best models, run in parallel) → Consensus (cross-model verification) → Merge (combine results). Cost-intelligent auto-escalation on failure.
+
+### Built-in Tools (16)
+`read_file`, `write_file`, `edit_file` (fuzzy matching), `append_file`, `bash` (streaming), `list_files`, `search_files` (regex), `glob`, `create_directory`, `delete_file`, `move_file`, `copy_file`, `url_fetch` (cached), `git_snapshot`
+
+### Native Integrations (33 tools)
+GitHub (12), Discord (7), Google Drive (7), Gmail (7). OAuth2 with auto-refresh.
+
+### Safety System
+4-level classification: Allow, Warn, Confirm, Deny. Pipe-to-shell detection. Per-project `.forge/safety.toml`. Trusted/blocked command lists.
+
+### MCP Support
+Full JSON-RPC 2.0 MCP client over stdio. Protocol 2025-03-26 compliance. Auto-discovers tools. Parallel server startup with timeout safety.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, project structure, and guidelines for adding tools, integrations, and slash commands.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md) for the full release history.
+See [CHANGELOG.md](CHANGELOG.md) for full release history.
 
 ## License
 
-MIT — see [LICENSE](LICENSE) for details.
+MIT — see [LICENSE](LICENSE).
 
 ---
 
 <p align="center">
-  <b>Built with Rust. Powered by Gemini. Free forever.</b>
+  <b>Built with Rust. Open source. Free forever.</b>
 </p>

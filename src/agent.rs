@@ -8,7 +8,7 @@ use std::sync::Arc;
 
 use crate::backend::{self, BackendClient, Provider};
 use crate::config::{self, Config};
-use crate::gemini::*;
+use crate::types::*;
 use crate::integrations::IntegrationRegistry;
 use crate::mcp::McpRegistry;
 use crate::models;
@@ -19,7 +19,7 @@ use crate::{audit, project, security, session, snapshot, ui};
 
 // ── System prompt ──────────────────────────────────────────────────────────────
 
-const SYSTEM_PROMPT_BASE: &str = r#"You are GeminiX — a powerful AI software engineering agent operating in a terminal environment with full file system access, shell execution, web search, and a comprehensive tool suite. You are fast, thorough, and produce production-ready work. You are built on Rust, powered by multiple AI models, and designed to outclass every other coding agent.
+const SYSTEM_PROMPT_BASE: &str = r#"You are FORGE — a powerful AI software engineering agent operating in a terminal environment with full file system access, shell execution, web search, and a comprehensive tool suite. You are fast, thorough, and produce production-ready work. You are built on Rust, powered by multiple AI models, and designed to outclass every other coding agent.
 
 ## Task Classification
 
@@ -82,9 +82,9 @@ You have a 1M token context window on Gemini 2.5 models. Use it. Read files full
 - google_search (when /web is enabled) for current docs, CVEs, competitor analysis, benchmarks
 - For comparison/research tasks: web search is MANDATORY. You cannot evaluate competitors from memory.
 
-## GeminiX Capabilities
+## FORGE Capabilities
 
-You are running on GeminiX — the open-source, multi-model terminal coding agent. Key capabilities:
+You are running on FORGE — the open-source, multi-model terminal coding agent. Key capabilities:
 - Multi-model: Gemini, Claude, GPT. User can switch with /model.
 - 1M token context on Gemini 2.5 models — the largest of any coding agent.
 - Test-fix loop: /test-fix runs tests, detects failures, fixes code, repeats until pass.
@@ -125,10 +125,10 @@ After every code change, verify:
 ### General: Read the project's README, CI config, and tests first. Project conventions override generic advice. When in a new codebase, spend time understanding before changing.
 
 ## Project Context
-- .geminix/project.md is authoritative for this project
+- .forge/project.md is authoritative for this project
 - .gitignore patterns inform search scope
 - The working directory is shown below — all relative paths are relative to cwd
-- Memory is loaded from .geminix/memory.md — follow memorized preferences
+- Memory is loaded from .forge/memory.md — follow memorized preferences
 
 {model_hint}
 {project_context}
@@ -176,8 +176,8 @@ fn model_hint(config: &Config) -> String {
 }
 
 fn load_memory_context() -> String {
-    // Load .geminix/memory.md if it exists
-    let path = std::path::Path::new(".geminix/memory.md");
+    // Load .forge/memory.md if it exists
+    let path = std::path::Path::new(".forge/memory.md");
     if let Ok(content) = std::fs::read_to_string(path) {
         let trimmed = content.trim();
         if !trimmed.is_empty() {
@@ -188,8 +188,8 @@ fn load_memory_context() -> String {
 }
 
 fn load_project_context() -> String {
-    // Look for .geminix/project.md in current dir
-    let path = std::path::Path::new(".geminix/project.md");
+    // Look for .forge/project.md in current dir
+    let path = std::path::Path::new(".forge/project.md");
     if let Ok(content) = std::fs::read_to_string(path) {
         let trimmed = content.trim();
         if !trimmed.is_empty() {
@@ -331,18 +331,18 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
     let mut session_tokens   = 0u32;
 
     // Announce project.md if found
-    if std::path::Path::new(".geminix/project.md").exists() {
+    if std::path::Path::new(".forge/project.md").exists() {
         println!(
             "  {} Loaded project instructions from {}",
             "[OK]".green(),
-            ".geminix/project.md".cyan()
+            ".forge/project.md".cyan()
         );
         println!();
     }
 
     let history_path = dirs::home_dir()
-        .map(|h| h.join(".geminix-history"))
-        .unwrap_or_else(|| std::path::PathBuf::from(".geminix-history"));
+        .map(|h| h.join(".forge-history"))
+        .unwrap_or_else(|| std::path::PathBuf::from(".forge-history"));
 
     let mut rl = DefaultEditor::new()?;
     let _ = rl.load_history(&history_path);
@@ -389,7 +389,7 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                         .unwrap_or(5);
                     let start = history.len().saturating_sub(n * 2);
                     for msg in &history[start..] {
-                        let label = if msg.role == "user" { "You".green() } else { "GeminiX".blue() };
+                        let label = if msg.role == "user" { "You".green() } else { "FORGE".blue() };
                         for part in &msg.parts {
                             if let Part::Text { text, .. } = part {
                                 let preview: String = text.chars().take(200).collect();
@@ -537,7 +537,7 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                                 println!("  Profile '{}' not found in config.", name.red());
                             }
                         }
-                        _ => println!("Usage: /profile <name>  (configured in ~/.geminix/config.toml [profiles] section)"),
+                        _ => println!("Usage: /profile <name>  (configured in ~/.forge/config.toml [profiles] section)"),
                     }
                 }
 
@@ -600,7 +600,7 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                     } else {
                         let now = chrono::Local::now();
                         let entry = format!("- [{}] {}", now.format("%Y-%m-%d"), fact);
-                        let path = std::path::Path::new(".geminix/memory.md");
+                        let path = std::path::Path::new(".forge/memory.md");
                         let mut content = std::fs::read_to_string(path).unwrap_or_default();
                         if !content.is_empty() && !content.ends_with('\n') { content.push('\n'); }
                         content.push_str(&entry);
@@ -618,7 +618,7 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                     if keyword.is_empty() {
                         println!("{}", "Usage: /forget <keyword> — remove matching entries from memory".dimmed());
                     } else {
-                        let path = std::path::Path::new(".geminix/memory.md");
+                        let path = std::path::Path::new(".forge/memory.md");
                         match std::fs::read_to_string(path) {
                             Ok(content) => {
                                 let filtered: Vec<&str> = content.lines()
@@ -644,7 +644,7 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                 }
 
                 "/memory" => {
-                    let path = std::path::Path::new(".geminix/memory.md");
+                    let path = std::path::Path::new(".forge/memory.md");
                     match std::fs::read_to_string(path) {
                         Ok(content) if !content.trim().is_empty() => {
                             println!("\n{} Persistent Memory:", "[MEM]".magenta());
@@ -990,7 +990,7 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                 }
 
                 "/save" => {
-                    let filename = parts.get(1).map(|s| s.trim()).unwrap_or("geminix-session.md");
+                    let filename = parts.get(1).map(|s| s.trim()).unwrap_or("forge-session.md");
                     match save_session(filename, &history) {
                         Ok(_)  => println!("{} '{}'", "Saved session to".green(), filename),
                         Err(e) => ui::print_error(&format!("Save failed: {}", e)),
@@ -1202,7 +1202,7 @@ async fn agentic_loop(
                 thought_active.set(false);
             }
             if first_text.get() {
-                print!("\n{} ", "GeminiX".bright_blue().bold());
+                print!("\n{} ", "FORGE".bright_blue().bold());
                 first_text.set(false);
             }
             print!("{}", chunk);
@@ -1411,8 +1411,8 @@ async fn auto_pr(description: &str) {
     }
 
     let body = format!(
-        "## Summary\n\nAuto-generated by GeminiX 1.0.\n\n{}\n\n\
-         > Created with [GeminiX](https://github.com/geminix/geminix)",
+        "## Summary\n\nAuto-generated by FORGE 1.0.\n\n{}\n\n\
+         > Created with [FORGE](https://github.com/forge/forge)",
         description
     );
 
@@ -1479,9 +1479,9 @@ async fn compact_history(config: &Config, history: &[Content]) -> Result<String>
 // ── /save ─────────────────────────────────────────────────────────────────────
 
 fn save_session(filename: &str, history: &[Content]) -> Result<()> {
-    let mut out = String::from("# GeminiX Session\n\n");
+    let mut out = String::from("# FORGE Session\n\n");
     for msg in history {
-        out.push_str(if msg.role == "user" { "## You\n" } else { "## GeminiX\n" });
+        out.push_str(if msg.role == "user" { "## You\n" } else { "## FORGE\n" });
         for part in &msg.parts {
             match part {
                 Part::Text { text, .. } => { out.push_str(text); out.push('\n'); }

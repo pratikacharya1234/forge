@@ -56,7 +56,7 @@ pub fn context_window(model: &str) -> u32 {
     }
 }
 
-// ── ~/.geminix/config.toml ─────────────────────────────────────────────────────
+// ── ~/.forge/config.toml ─────────────────────────────────────────────────────
 
 #[derive(Deserialize, Default)]
 #[allow(dead_code)]
@@ -106,11 +106,11 @@ pub struct ProfileConfig {
 }
 
 impl Config {
-    /// Load default values from `~/.geminix/config.toml`.
+    /// Load default values from `~/.forge/config.toml`.
     /// Returns a partial Config — API key and model will be overridden by CLI flags.
     pub fn file_defaults() -> FileDefaults {
         let path = dirs::home_dir()
-            .map(|h| h.join(".geminix").join("config.toml"));
+            .map(|h| h.join(".forge").join("config.toml"));
 
         let Some(path) = path else { return FileDefaults::default() };
         let Ok(content) = std::fs::read_to_string(path) else { return FileDefaults::default() };
@@ -159,7 +159,7 @@ pub struct FileDefaults {
 
 pub fn load_profile(name: &str) -> Option<ProfileConfig> {
     let path = dirs::home_dir()?
-        .join(".geminix")
+        .join(".forge")
         .join("config.toml");
     let content = std::fs::read_to_string(path).ok()?;
     #[derive(serde::Deserialize, Default)]

@@ -1,12 +1,12 @@
-# Contributing to GeminiX
+# Contributing to FORGE
 
 Thanks for your interest in contributing. This document covers how to set up, build, and submit changes.
 
 ## Setup
 
 ```bash
-git clone https://github.com/pratikacharya1234/geminix.git
-cd geminix
+git clone https://github.com/pratikacharya1234/forge.git
+cd forge
 ```
 
 ## Build
@@ -15,7 +15,7 @@ cd geminix
 cargo build --release
 ```
 
-The binary will be at `target/release/geminix`.
+The binary will be at `target/release/forge`.
 
 ## Development
 

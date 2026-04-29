@@ -2,7 +2,7 @@
 ///
 /// Pipeline: Research → Decompose → Dispatch → Consensus → Merge
 ///
-/// This is GeminiX's killer feature — the only coding agent that:
+/// This is FORGE's killer feature — the only coding agent that:
 /// 1. Auto-researches before coding
 /// 2. Decomposes tasks into subtasks
 /// 3. Routes each subtask to the best model for the job
@@ -19,7 +19,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::backend::{self, BackendClient, Provider};
 use crate::config::Config;
-use crate::gemini::*;
+use crate::types::*;
 use crate::integrations::IntegrationRegistry;
 use crate::mcp::McpRegistry;
 use crate::token_counter::CostTracker;
@@ -757,7 +757,7 @@ async fn run_subtask(
 
     // Run mini agentic loop
     use crate::tools;
-    use crate::gemini::*;
+    use crate::types::*;
 
     for iter in 0..=cfg.max_iterations {
         if iter >= cfg.max_iterations {

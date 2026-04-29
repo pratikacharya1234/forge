@@ -257,7 +257,7 @@ impl McpServer {
                     "protocolVersion": "2025-03-26",
                     "capabilities": {},
                     "clientInfo": {
-                        "name": "geminix",
+                        "name": "forge",
                         "version": "1.0.0"
                     }
                 })),
@@ -447,7 +447,7 @@ impl McpRegistry {
     }
 
     /// Convert all MCP tools into Gemini function declarations.
-    pub fn function_declarations(&self) -> Vec<crate::gemini::FunctionDeclaration> {
+    pub fn function_declarations(&self) -> Vec<crate::types::FunctionDeclaration> {
         let mut decls = Vec::new();
         for (prefixed_name, (_idx, tool)) in &self.tool_map {
             let schema = if tool.input_schema.is_object() {
@@ -482,7 +482,7 @@ impl McpRegistry {
                 })
             };
 
-            decls.push(crate::gemini::FunctionDeclaration {
+            decls.push(crate::types::FunctionDeclaration {
                 name: prefixed_name.clone(),
                 description: format!(
                     "[MCP {}] {}",

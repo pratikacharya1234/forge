@@ -8,13 +8,13 @@ pub struct AuditEntry {
 }
 
 fn audit_path() -> Option<std::path::PathBuf> {
-    let dir = std::path::Path::new(".geminix");
+    let dir = std::path::Path::new(".forge");
     let _ = std::fs::create_dir_all(dir);
     if dir.is_dir() {
         return Some(dir.join("audit.log"));
     }
     dirs::home_dir().map(|h| {
-        let d = h.join(".geminix");
+        let d = h.join(".forge");
         let _ = std::fs::create_dir_all(&d);
         d.join("audit.log")
     })

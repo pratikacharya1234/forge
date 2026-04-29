@@ -7,7 +7,7 @@ use serde_json::{json, Value};
 use tokio::io::AsyncBufReadExt as _;
 use walkdir::WalkDir;
 
-use crate::{audit, diff_view, gemini::FunctionDeclaration, integrations::IntegrationRegistry, mcp::McpRegistry, safety, snapshot};
+use crate::{audit, diff_view, types::FunctionDeclaration, integrations::IntegrationRegistry, mcp::McpRegistry, safety, snapshot};
 
 // ── Context passed to every tool invocation ────────────────────────────────────
 
@@ -633,7 +633,7 @@ async fn tool_url_fetch(args: &Value) -> ToolResult {
 
     let client = match reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(30))
-        .user_agent("Mozilla/5.0 (compatible; geminix/1.0)")
+        .user_agent("Mozilla/5.0 (compatible; forge/1.0)")
         .build()
     {
         Ok(c)  => c,
@@ -693,7 +693,7 @@ fn strip_html(html: &str) -> String {
 // ── git_snapshot ───────────────────────────────────────────────────────────────
 
 async fn tool_git_snapshot(args: &Value) -> ToolResult {
-    let name = args.get("name").and_then(Value::as_str).unwrap_or("geminix-auto");
+    let name = args.get("name").and_then(Value::as_str).unwrap_or("forge-auto");
 
     let out = tokio::process::Command::new("git")
         .args(["stash", "push", "-m", name, "--include-untracked"])
@@ -879,7 +879,7 @@ pub fn get_tool_declarations() -> Vec<FunctionDeclaration> {
             parameters: json!({
                 "type": "OBJECT",
                 "properties": {
-                    "name": { "type": "STRING", "description": "Snapshot label (default: geminix-auto)" }
+                    "name": { "type": "STRING", "description": "Snapshot label (default: forge-auto)" }
                 }
             }),
         },

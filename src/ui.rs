@@ -1,7 +1,7 @@
 use colored::Colorize;
 
 pub fn print_banner(grounding: bool, thinking: bool, auto_apply: bool) {
-    let has_safety_toml = std::path::Path::new(".geminix/safety.toml").exists();
+    let has_safety_toml = std::path::Path::new(".forge/safety.toml").exists();
     let width = 58;
 
     let border = "=".repeat(width).bright_blue();
@@ -14,15 +14,15 @@ pub fn print_banner(grounding: bool, thinking: bool, auto_apply: bool) {
         width = width - 4
     );
     println!(
-        "  {}  GeminiX v1.0.0   {}{}",
+        "  {}  FORGE v1.0.0   {}{}",
         "||".bright_blue(),
         " ".repeat(width - 24),
         "||".bright_blue()
     );
     println!(
-        "  {}  Terminal AI Coding Agent — Google Gemini  {}{}",
+        "  {}  Multi-Model Terminal AI Coding Agent  {}{}",
         "||".bright_blue(),
-        " ".repeat(width - 50),
+        " ".repeat(width - 48),
         "||".bright_blue()
     );
     println!(
@@ -51,7 +51,7 @@ pub fn print_banner(grounding: bool, thinking: bool, auto_apply: bool) {
 
     println!("\n  {}  {}", "->".bright_blue(), flags.join("  "));
     println!(
-        "  {}  Type a task. GeminiX reads, writes, runs, and iterates until done.",
+        "  {}  Type a task. FORGE reads, writes, runs, and iterates until done.",
         "->".bright_blue().dimmed()
     );
 
@@ -68,7 +68,7 @@ pub fn print_banner(grounding: bool, thinking: bool, auto_apply: bool) {
 
 pub fn print_thinking() {
     print!("\n  {} ", "THINKING".bright_yellow().bold());
-    println!("{}", "GeminiX is analyzing...".dimmed());
+    println!("{}", "FORGE is analyzing...".dimmed());
 }
 
 pub fn print_tool_call(tool_name: &str, args_display: &str) {
@@ -109,7 +109,7 @@ pub fn print_assistant_prefix() {
     println!();
     print!(
         "{} ",
-        "GeminiX:".bright_blue().bold()
+        "FORGE:".bright_blue().bold()
     );
 }
 
@@ -201,7 +201,7 @@ pub fn print_help() {
 
     let cmds: &[(&str, &str)] = &[
         // Core
-        ("/quit  /exit",               "exit GeminiX"),
+        ("/quit  /exit",               "exit FORGE"),
         ("/clear",                     "clear conversation history"),
         ("",                            ""),
         // Model & Thinking
@@ -311,8 +311,8 @@ pub fn print_help() {
         "{}",
         "----- CONFIG ----------------------------------------".bold()
     );
-    println!("  ~/.geminix/config.toml  and  .geminix/project.md (per-project)");
-    println!("  .geminix/safety.toml -- per-project permission policies");
+    println!("  ~/.forge/config.toml  and  .forge/project.md (per-project)");
+    println!("  .forge/safety.toml -- per-project permission policies");
     println!(
         "  {}",
         "auto_apply = false     # ask before overwriting files".dimmed()

@@ -6,7 +6,7 @@ mod audit;
 mod backend;
 mod config;
 mod diff_view;
-mod gemini;
+mod types;
 mod integrations;
 mod mcp;
 mod models;
@@ -22,8 +22,8 @@ mod ui;
 
 #[derive(Parser, Debug)]
 #[clap(
-    name    = "geminix",
-    about   = "GeminiX — Terminal AI coding agent powered by Google Gemini",
+    name    = "forge",
+    about   = "FORGE — Multi-model terminal AI coding agent",
     version = "1.0.0",
     long_about = None
 )]

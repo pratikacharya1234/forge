@@ -1,7 +1,7 @@
-# GeminiX — Self-Project
+# FORGE — Self-Project
 
 ## Overview
-GeminiX is a terminal-based AI coding agent powered by Google Gemini, written in Rust.
+FORGE is a terminal-based AI coding agent powered by Google Gemini, written in Rust.
 
 ## Architecture
 - Main entry: `src/main.rs` — CLI argument parsing with clap
@@ -21,8 +21,8 @@ GeminiX is a terminal-based AI coding agent powered by Google Gemini, written in
 - All tool functions return `ToolResult { output, is_error, was_streamed }`
 - New tools: add to `execute_tool()`, `get_tool_declarations()`, and the agent dispatch
 - Safety: 4 levels — Allow/Warn/Confirm/Deny
-- Config: loaded from `~/.geminix/config.toml` with CLI overrides
-- Per-project: `.geminix/project.md`, `.geminix/safety.toml`
+- Config: loaded from `~/.forge/config.toml` with CLI overrides
+- Per-project: `.forge/project.md`, `.forge/safety.toml`
 
 ## Dependencies
 - tokio (async runtime, full features)

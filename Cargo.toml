@@ -1,12 +1,12 @@
 [package]
-name = "geminix"
+name = "forge"
 version = "1.0.0"
 edition = "2021"
-description = "Terminal AI coding agent powered by Google Gemini"
+description = "Multi-model terminal AI coding agent — forge code with any model"
 authors = ["pratikacharya1234"]
 
 [[bin]]
-name = "geminix"
+name = "forge"
 path = "src/main.rs"
 
 [dependencies]

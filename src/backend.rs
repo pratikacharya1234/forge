@@ -8,7 +8,7 @@ use futures_util::StreamExt;
 use serde::{Deserialize, Serialize};
 
 use crate::config::Config;
-use crate::gemini::*;
+use crate::types::*;
 
 // ── Provider enum ─────────────────────────────────────────────────────────────
 

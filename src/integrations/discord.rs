@@ -1,6 +1,6 @@
 use serde_json::{json, Value};
 
-use crate::gemini::FunctionDeclaration;
+use crate::types::FunctionDeclaration;
 use crate::integrations::DiscordConfig;
 use crate::integrations::IntegrationService;
 use crate::tools::ToolResult;
@@ -31,7 +31,7 @@ impl DiscordIntegration {
             .client
             .get(Self::api_url(path))
             .header("Authorization", Self::auth_header(&self.bot_token))
-            .header("User-Agent", "geminix/1.0")
+            .header("User-Agent", "forge/1.0")
             .send()
             .await
             .map_err(|e| format!("Discord API request failed: {}", e))?;
@@ -52,7 +52,7 @@ impl DiscordIntegration {
             .post(Self::api_url(path))
             .header("Authorization", Self::auth_header(&self.bot_token))
             .header("Content-Type", "application/json")
-            .header("User-Agent", "geminix/1.0")
+            .header("User-Agent", "forge/1.0")
             .json(body)
             .send()
             .await
@@ -76,7 +76,7 @@ impl DiscordIntegration {
             .client
             .delete(Self::api_url(path))
             .header("Authorization", Self::auth_header(&self.bot_token))
-            .header("User-Agent", "geminix/1.0")
+            .header("User-Agent", "forge/1.0")
             .send()
             .await
             .map_err(|e| format!("Discord API request failed: {}", e))?;

@@ -115,7 +115,7 @@ pub fn load_project(root: &str, max_chars: Option<usize>) -> Result<LoadedProjec
 /// Clone a remote git repository into a temp directory and load it.
 pub async fn clone_and_load(url: &str) -> Result<LoadedProject> {
     let tmp = std::env::temp_dir().join(format!(
-        "geminix-learn-{}",
+        "forge-learn-{}",
         url.rsplit('/').next().unwrap_or("repo")
             .trim_end_matches(".git")
     ));

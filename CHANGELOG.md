@@ -1,12 +1,12 @@
 # Changelog
 
-All notable changes to GeminiX are documented in this file.
+All notable changes to FORGE are documented in this file.
 
 ## [1.0.0] — 2026-04-28
 
 ### First Public Release
 
-GeminiX v1.0.0 — the open-source, multi-model terminal coding agent. 1M token context. Free.
+FORGE v1.0.0 — the open-source, multi-model terminal coding agent. 1M token context. Free. Previously developed as GeminiX, rebranded to FORGE to reflect universal multi-model support and independence from any single AI provider.
 
 **Multi-Model Support**
 - Gemini 2.5 Pro/Flash/Lite, 2.0 Flash
@@ -36,7 +36,7 @@ GeminiX v1.0.0 — the open-source, multi-model terminal coding agent. 1M token 
 - Handles truncated output for large test suites
 
 **Persistent Memory**
-- `/memorize <fact>` saves to `.geminix/memory.md`
+- `/memorize <fact>` saves to `.forge/memory.md`
 - `/forget <keyword>` removes matching entries
 - `/memory` displays all memorized facts
 - Auto-injected into system prompt each turn
@@ -55,7 +55,7 @@ GeminiX v1.0.0 — the open-source, multi-model terminal coding agent. 1M token 
 **Safety System**
 - 4-level risk classification: Allow, Warn, Confirm, Deny
 - Pipe-to-shell detection and blocking
-- Per-project `.geminix/safety.toml` with category-level overrides
+- Per-project `.forge/safety.toml` with category-level overrides
 - Trusted/blocked command lists
 
 **Diff & Undo**
@@ -93,7 +93,7 @@ GeminiX v1.0.0 — the open-source, multi-model terminal coding agent. 1M token 
 - Gmail: 7 tools (send, list, search, labels, read status)
 
 **Named Profiles**
-- Configurable profiles in `~/.geminix/config.toml`
+- Configurable profiles in `~/.forge/config.toml`
 - Per-profile model, thinking, grounding, auto_apply, budget
 - `/profile` command for switching
 

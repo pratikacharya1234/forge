@@ -2,7 +2,7 @@ use std::sync::Mutex;
 
 use serde_json::{json, Value};
 
-use crate::gemini::FunctionDeclaration;
+use crate::types::FunctionDeclaration;
 use crate::integrations::GoogleConfig;
 use crate::integrations::IntegrationService;
 use crate::tools::ToolResult;
@@ -78,7 +78,7 @@ impl GoogleClient {
         if self.refresh_token.is_empty() {
             return Err(
                 "No access token or refresh token configured.\n\
-                 Set [integrations.google] in ~/.geminix/config.toml with:\n\
+                 Set [integrations.google] in ~/.forge/config.toml with:\n\
                  - client_id, client_secret, refresh_token\n\
                  See: https://console.cloud.google.com/apis/credentials"
                     .to_string(),
@@ -464,7 +464,7 @@ impl IntegrationService for GDriveIntegration {
                 let mime = args.get("mime_type").and_then(|v| v.as_str()).unwrap_or("text/plain");
                 let parent = args.get("parent_id").and_then(|v| v.as_str()).unwrap_or("root");
 
-                let boundary = "geminix_upload_boundary";
+                let boundary = "forge_upload_boundary";
                 let mut body = String::new();
                 body.push_str(&format!("--{}\r\n", boundary));
                 body.push_str("Content-Type: application/json\r\n\r\n");

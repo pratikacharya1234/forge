@@ -3,31 +3,31 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# ── GeminiX Install Script ─────────────────────────────────────────────────────
-# One-liner: curl -fsSL https://raw.githubusercontent.com/pratikacharya1234/geminix/main/install.sh | bash
+# ── FORGE Install Script ─────────────────────────────────────────────────────
+# One-liner: curl -fsSL https://raw.githubusercontent.com/pratikacharya1234/forge/main/install.sh | bash
 #
 # Options:
-#   GEMINIX_INSTALL_DIR   Install directory (default: /usr/local/bin)
-#   GEMINIX_VERSION       Version to install (default: latest)
-#   GEMINIX_FROM_SOURCE=1 Force source build
+#   FORGE_INSTALL_DIR   Install directory (default: /usr/local/bin)
+#   FORGE_VERSION       Version to install (default: latest)
+#   FORGE_FROM_SOURCE=1 Force source build
 #   --help                Show help
 #   --dir /path           Override install directory
 #   --version X.Y.Z       Install specific version
 # ────────────────────────────────────────────────────────────────────────────────
 
-REPO="pratikacharya1234/geminix"
-BINARY="geminix"
-INSTALL_DIR="${GEMINIX_INSTALL_DIR:-/usr/local/bin}"
-VERSION="${GEMINIX_VERSION:-latest}"
+REPO="pratikacharya1234/forge"
+BINARY="forge"
+INSTALL_DIR="${FORGE_INSTALL_DIR:-/usr/local/bin}"
+VERSION="${FORGE_VERSION:-latest}"
 
 # ── Argument parsing ──────────────────────────────────────────────────────────
 
 while [ $# -gt 0 ]; do
     case "$1" in
         --help|-h)
-            echo "GeminiX Installer"
+            echo "FORGE Installer"
             echo ""
-            echo "Usage: curl -fsSL https://raw.githubusercontent.com/pratikacharya1234/geminix/main/install.sh | bash"
+            echo "Usage: curl -fsSL https://raw.githubusercontent.com/pratikacharya1234/forge/main/install.sh | bash"
             echo "       bash install.sh"
             echo ""
             echo "Options:"
@@ -36,9 +36,9 @@ while [ $# -gt 0 ]; do
             echo "  --help            Show this help"
             echo ""
             echo "Environment:"
-            echo "  GEMINIX_INSTALL_DIR   Override install directory"
-            echo "  GEMINIX_VERSION       Override version"
-            echo "  GEMINIX_FROM_SOURCE=1 Force build from source"
+            echo "  FORGE_INSTALL_DIR   Override install directory"
+            echo "  FORGE_VERSION       Override version"
+            echo "  FORGE_FROM_SOURCE=1 Force build from source"
             exit 0
             ;;
         --dir)
@@ -91,23 +91,23 @@ install_from_release() {
     local tmpdir
 
     if [ "$VERSION" = "latest" ]; then
-        download_url="https://github.com/${REPO}/releases/latest/download/geminix-${platform}.tar.gz"
+        download_url="https://github.com/${REPO}/releases/latest/download/forge-${platform}.tar.gz"
     else
-        download_url="https://github.com/${REPO}/releases/download/v${VERSION}/geminix-${platform}.tar.gz"
+        download_url="https://github.com/${REPO}/releases/download/v${VERSION}/forge-${platform}.tar.gz"
     fi
 
     tmpdir="$(mktemp -d)"
     # shellcheck disable=SC2064
     trap "rm -rf '$tmpdir'" EXIT
 
-    step "Downloading GeminiX v${VERSION} for ${platform}..."
+    step "Downloading FORGE v${VERSION} for ${platform}..."
     if ! curl -fsSL --connect-timeout 10 --max-time 60 \
-        "$download_url" -o "$tmpdir/geminix.tar.gz" 2>/dev/null; then
+        "$download_url" -o "$tmpdir/forge.tar.gz" 2>/dev/null; then
         return 1
     fi
 
     step "Extracting..."
-    if ! tar -xzf "$tmpdir/geminix.tar.gz" -C "$tmpdir" 2>/dev/null; then
+    if ! tar -xzf "$tmpdir/forge.tar.gz" -C "$tmpdir" 2>/dev/null; then
         return 1
     fi
 
@@ -123,7 +123,7 @@ install_from_release() {
 # ── Install from source ──────────────────────────────────────────────────────
 
 build_from_source() {
-    step "Building GeminiX from source..."
+    step "Building FORGE from source..."
 
     if ! command -v cargo &>/dev/null; then
         error "Rust is not installed."
@@ -217,15 +217,15 @@ install_binary() {
     installed_version="$("$INSTALL_DIR/$BINARY" --version 2>&1 | head -1)"
 
     echo ""
-    info "GeminiX ${installed_version} installed to ${INSTALL_DIR}/${BINARY}"
+    info "FORGE ${installed_version} installed to ${INSTALL_DIR}/${BINARY}"
     echo ""
     step "Next steps:"
     echo "  1. Get a free API key → https://aistudio.google.com/apikey"
     echo "  2. Set it:           export GEMINI_API_KEY=\"your-key-here\""
-    echo "  3. Run it:           geminix"
+    echo "  3. Run it:           forge"
     echo ""
-    echo "  With Claude:         geminix --model claude-4-sonnet --anthropic-api-key \"sk-ant-...\""
-    echo "  With GPT:            geminix --model gpt-4.1 --openai-api-key \"sk-...\""
+    echo "  With Claude:         forge --model claude-4-sonnet --anthropic-api-key \"sk-ant-...\""
+    echo "  With GPT:            forge --model gpt-4.1 --openai-api-key \"sk-...\""
     echo ""
 }
 
@@ -233,7 +233,7 @@ install_binary() {
 
 main() {
     echo ""
-    info "GeminiX Installer"
+    info "FORGE Installer"
     echo ""
 
     local platform
@@ -242,7 +242,7 @@ main() {
     step "System: $(uname -s) $(uname -m)"
 
     # Check if force source build
-    if [ "${GEMINIX_FROM_SOURCE:-}" = "1" ]; then
+    if [ "${FORGE_FROM_SOURCE:-}" = "1" ]; then
         step "Source build requested"
         build_from_source
         return

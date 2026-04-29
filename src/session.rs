@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
-use crate::gemini::{Content, Part};
+use crate::types::{Content, Part};
 
 // ── Session data structure ──────────────────────────────────────────────────
 
@@ -43,7 +43,7 @@ enum SerializedPart {
 fn sessions_dir() -> PathBuf {
     dirs::home_dir()
         .unwrap_or_else(|| PathBuf::from("."))
-        .join(".geminix")
+        .join(".forge")
         .join("sessions")
 }
 
@@ -98,7 +98,7 @@ fn deserialize_history(contents: &[SerializedContent]) -> Vec<Content> {
                         let args_val: serde_json::Value =
                             serde_json::from_str(args).unwrap_or_default();
                         Part::FunctionCall {
-                            function_call: crate::gemini::FunctionCall {
+                            function_call: crate::types::FunctionCall {
                                 name: name.clone(),
                                 args: args_val,
                             },
@@ -109,7 +109,7 @@ fn deserialize_history(contents: &[SerializedContent]) -> Vec<Content> {
                         response,
                         is_error: _,
                     } => Part::FunctionResponse {
-                        function_response: crate::gemini::FunctionResponse {
+                        function_response: crate::types::FunctionResponse {
                             name: name.clone(),
                             response: serde_json::Value::String(response.clone()),
                             id: None,

@@ -1,6 +1,6 @@
 use serde_json::{json, Value};
 
-use crate::gemini::FunctionDeclaration;
+use crate::types::FunctionDeclaration;
 use crate::integrations::GithubConfig;
 use crate::integrations::IntegrationService;
 use crate::tools::ToolResult;
@@ -28,7 +28,7 @@ impl GithubIntegration {
             .get(Self::api_url(path))
             .header("Authorization", format!("Bearer {}", self.token))
             .header("Accept", "application/vnd.github+json")
-            .header("User-Agent", "geminix/1.0")
+            .header("User-Agent", "forge/1.0")
             .header("X-GitHub-Api-Version", "2022-11-28")
             .send()
             .await
@@ -54,7 +54,7 @@ impl GithubIntegration {
             .post(Self::api_url(path))
             .header("Authorization", format!("Bearer {}", self.token))
             .header("Accept", "application/vnd.github+json")
-            .header("User-Agent", "geminix/1.0")
+            .header("User-Agent", "forge/1.0")
             .header("X-GitHub-Api-Version", "2022-11-28")
             .json(body)
             .send()
@@ -81,7 +81,7 @@ impl GithubIntegration {
             .patch(Self::api_url(path))
             .header("Authorization", format!("Bearer {}", self.token))
             .header("Accept", "application/vnd.github+json")
-            .header("User-Agent", "geminix/1.0")
+            .header("User-Agent", "forge/1.0")
             .header("X-GitHub-Api-Version", "2022-11-28")
             .json(body)
             .send()

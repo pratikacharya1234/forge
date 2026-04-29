@@ -1,6 +1,6 @@
 {
-  "name": "gemini-code",
+  "name": "forge",
   "version": "1.0.0",
   "private": true,
-  "description": "GeminiX — Gemini-powered AI coding agent (Rust terminal app)"
+  "description": "FORGE — Gemini-powered AI coding agent (Rust terminal app)"
 }

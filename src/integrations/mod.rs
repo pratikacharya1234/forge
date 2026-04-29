@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use serde::Deserialize;
 use serde_json::Value;
 
-use crate::gemini::FunctionDeclaration;
+use crate::types::FunctionDeclaration;
 use crate::tools::{ToolContext, ToolResult};
 
 pub mod github;

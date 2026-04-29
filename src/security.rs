@@ -2,7 +2,7 @@ use anyhow::Result;
 use colored::Colorize;
 
 use crate::config::Config;
-use crate::gemini::*;
+use crate::types::*;
 
 /// Run a security sweep on the current working directory.
 ///
@@ -19,7 +19,7 @@ pub async fn sweep(config: &Config) -> Result<()> {
     );
     println!(
         "{}",
-        "║  GeminiX SecuritySweep                       ║".bright_red()
+        "║  FORGE SecuritySweep                       ║".bright_red()
     );
     println!(
         "{}",
@@ -269,7 +269,7 @@ fn static_scan() -> Vec<String> {
 
 fn build_report(findings: &[String]) -> Result<String> {
     let mut out = String::new();
-    out.push_str(&format!("# GeminiX Security Audit — {}\n\n", chrono_now()));
+    out.push_str(&format!("# FORGE Security Audit — {}\n\n", chrono_now()));
     if findings.is_empty() {
         out.push_str("No automated findings. See Gemini analysis output above.\n");
     } else {
