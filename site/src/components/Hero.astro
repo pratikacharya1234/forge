@@ -1,0 +1,39 @@
+---
+import Logo from './Logo.svelte';
+import Terminal from './Terminal.svelte';
+---
+
+<section class="relative min-h-screen flex flex-col items-center justify-center px-6 pt-24 pb-12 overflow-hidden">
+  <div class="absolute inset-0 -z-10">
+    <div class="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-accent-indigo/10 rounded-full blur-[120px]"></div>
+    <div class="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-accent-cyan/10 rounded-full blur-[100px]"></div>
+  </div>
+
+  <div class="max-w-5xl w-full text-center space-y-8 fade-in">
+    <div class="flex justify-center mb-4">
+      <Logo />
+    </div>
+    
+    <h1 class="text-5xl md:text-7xl font-bold tracking-tight">
+      Forge Code With <span class="text-transparent bg-clip-text bg-gradient-to-r from-accent-indigo to-accent-cyan">Any Model</span>
+    </h1>
+    
+    <p class="text-xl md:text-2xl text-white/60 max-w-2xl mx-auto">
+      Free. Open Source. 1M Context. <br class="hidden md:block" />
+      Gemini + Claude + GPT.
+    </p>
+
+    <div class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+      <a href="#download" class="px-8 py-4 bg-accent-indigo hover:bg-accent-indigo/90 text-white font-bold rounded-full transition-all hover:scale-105 active:scale-95 shadow-lg shadow-accent-indigo/20">
+        Download v0.0.1
+      </a>
+      <a href="https://github.com/pratikacharya1234/forge" target="_blank" class="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold rounded-full transition-all hover:scale-105 active:scale-95 flex items-center gap-2">
+        GitHub ★
+      </a>
+    </div>
+
+    <div class="pt-16 w-full max-w-4xl mx-auto">
+      <Terminal client:load />
+    </div>
+  </div>
+</section>

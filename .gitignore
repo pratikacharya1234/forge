@@ -32,3 +32,8 @@ packages/
 # Generated reports
 security_audit_*.md
 AI_Coding_Tools_Comparison.md
+
+# Website
+site/node_modules/
+site/dist/
+site/.astro/

@@ -1,0 +1,49 @@
+<section id="download" class="py-24 px-6 bg-surface">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-16 fade-in">
+      <h2 class="text-3xl md:text-5xl font-bold mb-4">Download FORGE</h2>
+      <p class="text-white/60 text-lg">Native binaries for every major platform.</p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-16">
+      {[
+        { os: 'Linux', arch: 'x86_64', size: '12MB', sha: 'cc489a7a280095da407b98b25f6c83888efdf3f422ca86b539012e0f58ff0022', url: 'https://github.com/pratikacharya1234/forge/releases/download/v0.0.1/forge-cli-linux-x86_64.tar.gz' },
+        { os: 'Linux', arch: 'ARM64', size: '11MB', sha: 'coming soon', url: '#' },
+        { os: 'macOS', arch: 'x86_64', size: '13MB', sha: 'coming soon', url: '#' },
+        { os: 'macOS', arch: 'ARM64', size: '12MB', sha: 'coming soon', url: '#' }
+      ].map(item => (
+        <div class="p-6 bg-background border border-white/10 rounded-2xl flex flex-col items-center text-center fade-in">
+          <div class="text-white/40 text-xs font-bold uppercase tracking-widest mb-2">{item.os}</div>
+          <div class="text-xl font-bold mb-1">{item.arch}</div>
+          <div class="flex items-center gap-2 mb-6">
+            <span class="px-2 py-0.5 bg-accent-indigo/20 text-accent-indigo text-[10px] font-bold rounded uppercase">v0.0.1</span>
+            <span class="text-white/30 text-[10px]">{item.size}</span>
+          </div>
+          <a 
+            href={item.url} 
+            class={`w-full py-3 rounded-xl font-bold transition-all ${item.url === '#' ? 'bg-white/5 text-white/20 cursor-not-allowed' : 'bg-white text-black hover:bg-white/90 active:scale-95'}`}
+          >
+            {item.url === '#' ? 'Coming Soon' : 'Download'}
+          </a>
+          {item.sha !== 'coming soon' && (
+            <a href="https://github.com/pratikacharya1234/forge/blob/main/packages/checksums.sha256" target="_blank" class="mt-4 text-[10px] text-white/20 hover:text-white/40 font-mono underline">
+              SHA256: {item.sha}
+            </a>
+          )}
+        </div>
+      ))}
+    </div>
+
+    <div class="max-w-2xl mx-auto p-8 bg-black/50 border border-white/5 rounded-2xl fade-in">
+      <h3 class="text-xl font-bold mb-4">Build from Source</h3>
+      <div class="space-y-4 font-mono text-sm">
+        <div class="p-4 bg-black rounded-lg text-white/60">
+          <span class="text-terminal-green">$</span> git clone https://github.com/pratikacharya1234/forge.git <br/>
+          <span class="text-terminal-green">$</span> cd forge <br/>
+          <span class="text-terminal-green">$</span> cargo build --release
+        </div>
+        <p class="text-xs text-white/30 italic">Note: Requires Rust 1.75+. For cross-compilation, use `cargo install cross`.</p>
+      </div>
+    </div>
+  </div>
+</section>

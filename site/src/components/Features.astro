@@ -1,0 +1,46 @@
+<section id="how-it-works" class="py-24 px-6 bg-surface">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-16 fade-in">
+      <h2 class="text-3xl md:text-5xl font-bold mb-4">How It Works</h2>
+      <p class="text-white/60 text-lg">A 5-phase pipeline designed for reliability and scale.</p>
+    </div>
+
+    <!-- Visual Flow -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-24 relative">
+      <!-- Connection lines (desktop) -->
+      <div class="hidden md:block absolute top-1/2 left-0 w-full h-0.5 bg-gradient-to-r from-accent-indigo via-accent-cyan to-accent-indigo -translate-y-1/2 -z-0 connection-line"></div>
+      
+      {[
+        { step: '1', title: 'Input', desc: 'You type a natural language task in the terminal.' },
+        { step: '2', title: 'Research', desc: 'FORGE searches docs, APIs, and project context.' },
+        { step: '3', title: 'Decompose', desc: 'Task is split into subtasks for the best models.' },
+        { step: '4', title: 'Verify', desc: 'Code is written, tested, and cross-verified.' }
+      ].map((item) => (
+        <div class="relative bg-background border border-white/5 p-8 rounded-2xl z-10 fade-in hover:border-accent-indigo/50 transition-all group">
+          <div class="w-12 h-12 bg-accent-indigo/20 text-accent-indigo rounded-full flex items-center justify-center font-bold text-xl mb-6 border border-accent-indigo/30 group-hover:scale-110 transition-transform">
+            {item.step}
+          </div>
+          <h3 class="text-xl font-bold mb-2">{item.title}</h3>
+          <p class="text-white/50 text-sm leading-relaxed">{item.desc}</p>
+        </div>
+      ))}
+    </div>
+
+    <!-- Features Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {[
+        { title: 'Multi-Model Routing', desc: 'Automatically picks the best model (Gemini, Claude, GPT) per subtask complexity.' },
+        { title: '16 Built-in Tools', desc: 'Full filesystem access, shell execution, web search, and git integration.' },
+        { title: 'Auto-Learning (ALICE)', desc: 'FORGE learns from every session, auto-injecting lessons into future prompts.' },
+        { title: 'Safety System', desc: '4-level risk classification with per-project safety policies and human-in-the-loop.' },
+        { title: 'MCP Support', desc: 'Connect to any Model Context Protocol server for infinite tool extensibility.' },
+        { title: 'Consensus Verification', desc: 'Critical changes are cross-verified by a second, independent model provider.' }
+      ].map((feat) => (
+        <div class="p-8 bg-white/5 border border-white/5 rounded-2xl hover:border-accent-indigo/30 transition-colors group fade-in">
+          <h3 class="text-lg font-bold mb-3 group-hover:text-accent-indigo transition-colors">{feat.title}</h3>
+          <p class="text-white/50 text-sm leading-relaxed">{feat.desc}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
