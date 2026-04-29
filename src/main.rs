@@ -6,6 +6,7 @@ mod audit;
 mod backend;
 mod config;
 mod diff_view;
+mod learning;
 mod types;
 mod integrations;
 mod mcp;

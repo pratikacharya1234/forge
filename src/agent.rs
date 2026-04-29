@@ -10,6 +10,7 @@ use crate::backend::{self, BackendClient, Provider};
 use crate::config::{self, Config};
 use crate::types::*;
 use crate::integrations::IntegrationRegistry;
+use crate::learning;
 use crate::mcp::McpRegistry;
 use crate::models;
 use crate::orchestrator;
@@ -123,6 +124,8 @@ After every change, mentally verify:
 {model_hint}
 {project_context}
 {memory_context}
+{dna_context}
+{learnings_context}
 Working directory: {cwd}
 "#;
 
@@ -208,12 +211,18 @@ fn system_prompt(config: &Config) -> String {
     };
 
     let tool_count = tools::core_tool_count();
+    let dna = learning::ProjectDna::detect();
+    let dna_ctx = dna.to_prompt_context();
+    let learnings = learning::load_learnings();
+    let learnings_ctx = learning::learnings_to_context(&learnings);
 
     SYSTEM_PROMPT_BASE
         .replace("{model_hint}", &model_hint(config))
         .replace("{project_context}", &load_project_context())
         .replace("{memory_context}", &load_memory_context())
         .replace("{tool_count}", &tool_count.to_string())
+        .replace("{dna_context}", &dna_ctx)
+        .replace("{learnings_context}", &learnings_ctx)
         .replace("{cwd}", &cwd_safe)
         + grounding_line
 }
@@ -734,6 +743,39 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                         }
                         _ => println!("{} No memories yet. Use {} to add one.", "[MEM]".magenta(), "/memorize <fact>".cyan()),
                     }
+                }
+
+                "/learnings" => {
+                    let learnings = learning::load_learnings();
+                    if learnings.is_empty() {
+                        println!("{}", "[ALICE] No auto-learned patterns yet. Accumulate as errors are encountered and fixed.".cyan());
+                    } else {
+                        println!("\n{} Auto-Learned Patterns ({} total):", "[ALICE]".cyan(), learnings.len());
+                        for l in &learnings {
+                            let count = if l.count > 1 { format!(" ({}x)", l.count) } else { String::new() };
+                            println!("  {} [{}/{}] {}", "*".dimmed(), l.category.dimmed(), count.trim(), l.lesson.dimmed());
+                        }
+                        println!();
+                    }
+                }
+
+                "/dna" => {
+                    let dna = learning::ProjectDna::detect();
+                    println!("\n{} Project DNA:", "[DNA]".cyan());
+                    if !dna.language.is_empty() {
+                        println!("  Language:   {}", dna.language.cyan());
+                        println!("  Build:      {}", dna.build_command.dimmed());
+                        println!("  Test:       {}", dna.test_command.dimmed());
+                        if !dna.indent_style.is_empty() {
+                            println!("  Indent:     {} (width: {})", dna.indent_style.cyan(), dna.indent_width);
+                        }
+                        for c in &dna.conventions {
+                            println!("  Convention: {}", c.dimmed());
+                        }
+                    } else {
+                        println!("  No project structure detected.");
+                    }
+                    println!();
                 }
 
                 "/explain" => {
@@ -1453,9 +1495,15 @@ async fn agentic_loop(
                     consecutive_same_error += 1;
                 } else {
                     last_error = err_fingerprint;
+                    // Record learning from new error
+                    learning::record_learning(&result.output, &tool_name, false);
                     consecutive_same_error = 1;
                 }
             } else {
+                // If a previously-erroring tool succeeded, record the fix
+                if consecutive_same_error > 0 && !last_error.is_empty() {
+                    learning::record_learning(&last_error, &tool_name, true);
+                }
                 consecutive_same_error = 0;
             }
         }
