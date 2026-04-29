@@ -2,6 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import Nav from '../components/Nav.svelte';
 import Hero from '../components/Hero.astro';
+import Showcase from '../components/Showcase.svelte';
 import Features from '../components/Features.astro';
 import HowToUse from '../components/HowToUse.svelte';
 import Download from '../components/Download.astro';
@@ -13,6 +14,7 @@ import Community from '../components/Community.astro';
     <Nav client:load />
 
 		<Hero />
+    <Showcase client:load />
     <Features />
     <HowToUse client:load />
     <Download />
