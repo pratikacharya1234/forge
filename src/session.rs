@@ -58,7 +58,7 @@ fn serialize_history(history: &[Content]) -> Vec<SerializedContent> {
                     Part::Text { text, .. } => SerializedPart::Text {
                         text: text.clone(),
                     },
-                    Part::FunctionCall { function_call } => SerializedPart::FunctionCall {
+                    Part::FunctionCall { function_call, .. } => SerializedPart::FunctionCall {
                         name: function_call.name.clone(),
                         args: function_call.args.to_string(),
                     },
@@ -103,6 +103,7 @@ fn deserialize_history(contents: &[SerializedContent]) -> Vec<Content> {
                                 args: args_val,
                                 thought_signature: None,
                             },
+                            thought_signature: None,
                         }
                     }
                     SerializedPart::FunctionResponse {

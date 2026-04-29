@@ -38,6 +38,9 @@ pub enum Part {
     FunctionCall {
         #[serde(rename = "functionCall")]
         function_call: FunctionCall,
+        /// Gemini 3+ thought signature on the part itself (sibling of functionCall).
+        #[serde(default, rename = "thoughtSignature", skip_serializing_if = "Option::is_none")]
+        thought_signature: Option<String>,
     },
     FunctionResponse {
         #[serde(rename = "functionResponse")]
@@ -52,12 +55,15 @@ pub enum Part {
         /// Present and `true` on Gemini thinking-mode reasoning chunks.
         #[serde(default)]
         thought: Option<bool>,
+        /// Gemini 3+ thought signature on the part itself.
+        #[serde(default, rename = "thoughtSignature", skip_serializing_if = "Option::is_none")]
+        thought_signature: Option<String>,
     },
 }
 
 impl Part {
     pub fn text(s: impl Into<String>) -> Self {
-        Part::Text { text: s.into(), thought: None }
+        Part::Text { text: s.into(), thought: None, thought_signature: None }
     }
 
     pub fn image(mime_type: impl Into<String>, base64_data: impl Into<String>) -> Self {
@@ -296,7 +302,7 @@ impl GeminiClient {
                                 if let Some(content) = candidate.content {
                                     for part in content.parts {
                                         match part {
-                                            Part::Text { ref text, thought: Some(true) } => {
+                                            Part::Text { ref text, thought: Some(true), .. } => {
                                                 on_thought(text);
                                                 all_thought.push_str(text);
                                             }

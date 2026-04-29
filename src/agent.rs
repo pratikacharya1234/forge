@@ -1359,10 +1359,10 @@ async fn agentic_loop(
 
         for part in &content.parts {
             match part {
-                Part::Text { text, thought: None | Some(false) } if !text.trim().is_empty() => {
+                Part::Text { text, thought: None | Some(false), .. } if !text.trim().is_empty() => {
                     text_chunks.push(text.clone());
                 }
-                Part::FunctionCall { function_call } => {
+                Part::FunctionCall { function_call, .. } => {
                     function_calls.push(function_call.clone());
                 }
                 _ => {}
@@ -1624,7 +1624,7 @@ fn save_session(filename: &str, history: &[Content]) -> Result<()> {
         for part in &msg.parts {
             match part {
                 Part::Text { text, .. } => { out.push_str(text); out.push('\n'); }
-                Part::FunctionCall { function_call } => {
+                Part::FunctionCall { function_call, .. } => {
                     out.push_str(&format!("\n**Tool:** `{}` `{}`\n", function_call.name, function_call.args));
                 }
                 Part::FunctionResponse { function_response } => {

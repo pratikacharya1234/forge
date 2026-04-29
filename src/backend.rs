@@ -204,7 +204,7 @@ impl GeminiBackend {
                                 if let Some(content) = candidate.content {
                                     for part in content.parts {
                                         match part {
-                                            Part::Text { ref text, thought: Some(true) } => {
+                                            Part::Text { ref text, thought: Some(true), .. } => {
                                                 on_thought(text);
                                                 all_thought.push_str(text);
                                             }
@@ -385,7 +385,7 @@ impl AnthropicBackend {
         let mut messages = Vec::new();
         for content in contents {
             let text: String = content.parts.iter().filter_map(|p| {
-                if let Part::Text { text, thought: None | Some(false) } = p {
+                if let Part::Text { text, thought: None | Some(false), .. } = p {
                     if !text.trim().is_empty() { Some(text.as_str()) } else { None }
                 } else { None }
             }).collect::<Vec<_>>().join("\n");
@@ -402,7 +402,7 @@ impl AnthropicBackend {
                     let mut anthro_content: Vec<AnthropicContent> = Vec::new();
                     // Text parts
                     let text_content: String = content.parts.iter().filter_map(|p| {
-                        if let Part::Text { text, thought: None | Some(false) } = p {
+                        if let Part::Text { text, thought: None | Some(false), .. } = p {
                             if !text.trim().is_empty() { Some(text.as_str()) } else { None }
                         } else { None }
                     }).collect::<Vec<_>>().join("\n");
@@ -440,7 +440,7 @@ impl AnthropicBackend {
                     let mut anthro_content: Vec<AnthropicContent> = Vec::new();
                     for part in &content.parts {
                         match part {
-                            Part::Text { text, thought: Some(true) } => {
+                            Part::Text { text, thought: Some(true), .. } => {
                                 anthro_content.push(AnthropicContent {
                                     content_type: "thinking".into(),
                                     thinking: Some(text.clone()),
@@ -456,7 +456,7 @@ impl AnthropicBackend {
                                     tool_use_id: None, content: None,
                                 });
                             }
-                            Part::FunctionCall { function_call } => {
+                            Part::FunctionCall { function_call, .. } => {
                                 anthro_content.push(AnthropicContent {
                                     content_type: "tool_use".into(),
                                     id: Some(format!("toolu_{}", uuid::Uuid::new_v4())),
@@ -543,7 +543,7 @@ impl AnthropicBackend {
                 }
                 "thinking" => {
                     if let Some(ref t) = block.thinking {
-                        parts.push(Part::Text { text: t.clone(), thought: Some(true) });
+                        parts.push(Part::Text { text: t.clone(), thought: Some(true), thought_signature: None });
                     }
                 }
                 "tool_use" => {
@@ -553,6 +553,7 @@ impl AnthropicBackend {
                             args: block.input.clone().unwrap_or(serde_json::json!({})),
                             thought_signature: None,
                         },
+                        thought_signature: None,
                     });
                 }
                 _ => {}
@@ -768,7 +769,7 @@ impl AnthropicBackend {
                 }
                 "thinking" => {
                     if let Some(ref t) = block.thinking {
-                        parts.push(Part::Text { text: t.clone(), thought: Some(true) });
+                        parts.push(Part::Text { text: t.clone(), thought: Some(true), thought_signature: None });
                     }
                 }
                 "tool_use" => {
@@ -777,7 +778,7 @@ impl AnthropicBackend {
                         args: block.input.clone().unwrap_or(serde_json::json!({})),
                         thought_signature: None,
                     };
-                    parts.push(Part::FunctionCall { function_call: fc });
+                    parts.push(Part::FunctionCall { function_call: fc, thought_signature: None });
                 }
                 _ => {}
             }
@@ -928,7 +929,7 @@ impl OpenAIBackend {
             match content.role.as_str() {
                 "system" => {
                     let text: String = content.parts.iter().filter_map(|p| {
-                        if let Part::Text { text, thought: None | Some(false) } = p { Some(text.as_str()) } else { None }
+                        if let Part::Text { text, thought: None | Some(false), .. } = p { Some(text.as_str()) } else { None }
                     }).collect::<Vec<_>>().join("\n");
                     if !text.is_empty() {
                         messages.push(OpenAIMessage {
@@ -940,7 +941,7 @@ impl OpenAIBackend {
                 "user" => {
                     let text: String = content.parts.iter().filter_map(|p| {
                         match p {
-                            Part::Text { text, thought: None | Some(false) } if !text.trim().is_empty() => Some(text.as_str()),
+                            Part::Text { text, thought: None | Some(false), .. } if !text.trim().is_empty() => Some(text.as_str()),
                             Part::FunctionResponse { .. } => {
                                 // Tool results handled separately below as tool messages
                                 Some("__TOOL_RESULT__")
@@ -979,13 +980,13 @@ impl OpenAIBackend {
                 }
                 "model" | "assistant" => {
                     let text: String = content.parts.iter().filter_map(|p| {
-                        if let Part::Text { text, thought: None | Some(false) } = p {
+                        if let Part::Text { text, thought: None | Some(false), .. } = p {
                             if !text.trim().is_empty() { Some(text.as_str()) } else { None }
                         } else { None }
                     }).collect::<Vec<_>>().join("\n");
 
                     let tool_calls: Vec<OpenAIToolCall> = content.parts.iter().enumerate().filter_map(|(i, p)| {
-                        if let Part::FunctionCall { function_call } = p {
+                        if let Part::FunctionCall { function_call, .. } = p {
                             Some(OpenAIToolCall {
                                 index: i,
                                 id: format!("call_{}", uuid::Uuid::new_v4()),
@@ -1068,6 +1069,7 @@ impl OpenAIBackend {
                             args,
                             thought_signature: None,
                         },
+                        thought_signature: None,
                     });
                 }
             }
@@ -1199,6 +1201,7 @@ impl OpenAIBackend {
                 .unwrap_or(serde_json::json!({}));
             parts.push(Part::FunctionCall {
                 function_call: FunctionCall { name: tc.function.name, args, thought_signature: None },
+                thought_signature: None,
             });
         }
 

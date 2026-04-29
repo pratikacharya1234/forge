@@ -687,7 +687,7 @@ impl TaskOrchestrator {
     fn extract_text(resp: &GenerateContentResponse) -> Option<String> {
         resp.candidates.as_ref()?.first()?.content.as_ref()?.parts.iter()
             .filter_map(|p| {
-                if let Part::Text { text, thought: None | Some(false) } = p {
+                if let Part::Text { text, thought: None | Some(false), .. } = p {
                     Some(text.clone())
                 } else { None }
             })
@@ -810,10 +810,10 @@ async fn run_subtask(
                 if let Some(content) = &candidate.content {
                     for part in &content.parts {
                         match part {
-                            Part::Text { text, thought: None | Some(false) } => {
+                            Part::Text { text, thought: None | Some(false), .. } => {
                                 text_parts.push(text.clone());
                             }
-                            Part::FunctionCall { function_call } => {
+                            Part::FunctionCall { function_call, .. } => {
                                 function_calls.push((function_call, None));
                             }
                             _ => {}
@@ -835,6 +835,7 @@ async fn run_subtask(
                     args: fc.args.clone(),
                     thought_signature: None,
                 },
+                thought_signature: None,
             });
         }
         if model_parts.is_empty() {

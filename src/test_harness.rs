@@ -199,7 +199,7 @@ mod types_tests {
     fn part_text_creation() {
         let part = Part::text("hello world");
         match part {
-            Part::Text { text, thought } => {
+            Part::Text { text, thought, .. } => {
                 assert_eq!(text, "hello world");
                 assert!(thought.is_none() || thought == Some(false));
             }
@@ -296,7 +296,7 @@ mod backend_response_tests {
         let candidates = resp.candidates.unwrap();
         let content = candidates[0].content.as_ref().unwrap();
         match &content.parts[0] {
-            Part::FunctionCall { function_call } => {
+            Part::FunctionCall { function_call, .. } => {
                 assert_eq!(function_call.name, "read_file");
                 assert_eq!(function_call.args["path"], "src/main.rs");
             }
@@ -325,7 +325,7 @@ mod backend_response_tests {
         // Simulate what AnthropicBackend::response_to_gemini does internally
         let part = Part::text("Here is the code change.");
         match part {
-            Part::Text { text, thought } => {
+            Part::Text { text, thought, .. } => {
                 assert!(!text.is_empty());
                 assert!(thought.is_none() || thought == Some(false));
             }
@@ -339,9 +339,10 @@ mod backend_response_tests {
         let part = Part::Text {
             text: "Let me think about this...".into(),
             thought: Some(true),
+            thought_signature: None,
         };
         match part {
-            Part::Text { text, thought } => {
+            Part::Text { text, thought, .. } => {
                 assert_eq!(thought, Some(true));
                 assert_eq!(text, "Let me think about this...");
             }
