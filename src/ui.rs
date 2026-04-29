@@ -83,14 +83,14 @@ pub fn print_banner(grounding: bool, thinking: bool, auto_apply: bool, tool_coun
 
     // Tagline + version
     // "  Multi-Model Terminal AI Coding Agent" = 38 chars
-    // "v0.9.0"                                =  6 chars
+    // "v0.0.1"                                =  6 chars
     // padding between                         = 76 - 38 - 6 = 32
     box_row_pre();
     print!(
         "{}{}{}",
         "  Multi-Model Terminal AI Coding Agent".bright_white().bold(),
         " ".repeat(32),
-        "v0.9.0".bright_cyan()
+        "v0.0.1".bright_cyan()
     );
     box_row_post(38 + 32 + 6);
 
