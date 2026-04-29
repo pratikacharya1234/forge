@@ -165,7 +165,9 @@ pub fn print_thinking() {
 
 pub fn print_tool_call(tool_name: &str, args_display: &str) {
     let display = if args_display.len() > 80 {
-        format!("{}…", &args_display[..77])
+        // UTF-8 safe truncation — find a char boundary ≤ 77 bytes
+        let end = if args_display.is_char_boundary(77) { 77 } else { args_display.floor_char_boundary(77) };
+        format!("{}…", &args_display[..end])
     } else {
         args_display.to_string()
     };
