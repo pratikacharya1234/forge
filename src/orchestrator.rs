@@ -225,7 +225,7 @@ impl TaskOrchestrator {
         } else if self.config.model.contains("pro") {
             &self.config.model
         } else {
-            "gemini-2.5-pro"
+            "gemini-3-pro"
         };
 
         let dc_config = Config {
@@ -444,7 +444,7 @@ impl TaskOrchestrator {
                 } else if self.config.openai_api_key.as_deref().map_or(false, |k| !k.is_empty()) {
                     "o3".into()
                 } else {
-                    "gemini-2.5-pro".into()
+                    "gemini-3-pro".into()
                 }
             }
             "low" => {
@@ -459,7 +459,7 @@ impl TaskOrchestrator {
     fn escalate_model(&self, current: &str) -> String {
         let provider = backend::detect_provider(current);
         match provider {
-            Provider::Gemini => "gemini-2.5-pro".into(),
+            Provider::Gemini => "gemini-3-pro".into(),
             Provider::Anthropic => {
                 if current.contains("sonnet") && self.config.openai_api_key.as_deref().map_or(false, |k| !k.is_empty()) {
                     "o3".into()
@@ -473,7 +473,7 @@ impl TaskOrchestrator {
                 } else if self.config.anthropic_api_key.as_deref().map_or(false, |k| !k.is_empty()) {
                     "claude-4-sonnet".into()
                 } else {
-                    "gemini-2.5-pro".into()
+                    "gemini-3-pro".into()
                 }
             }
         }
@@ -525,13 +525,13 @@ impl TaskOrchestrator {
                 if self.config.openai_api_key.as_deref().map_or(false, |k| !k.is_empty()) {
                     "o3"
                 } else {
-                    "gemini-2.5-pro"
+                    "gemini-3-pro"
                 }
             } else {
                 if self.config.anthropic_api_key.as_deref().map_or(false, |k| !k.is_empty()) {
                     "claude-4-sonnet"
                 } else {
-                    "gemini-2.5-pro"
+                    "gemini-3-pro"
                 }
             };
 

@@ -393,11 +393,11 @@ pub fn print_help(
     } else {
         // Fallback when offline or key unavailable
         let gemini: &[(&str, &str)] = &[
-            ("gemini-2.5-flash",       "fastest  (default)"),
-            ("gemini-2.5-flash-lite",  "cheapest — $0.10/M input"),
+            ("gemini-3.1-pro",         "latest — 80.6% SWE-bench"),
+            ("gemini-3-flash",         "latest fast model"),
             ("gemini-2.5-pro",         "deep reasoning, 1M context"),
-            ("gemini-2.0-flash",       "previous generation"),
-            ("gemini-2.0-flash-lite",  "lightest, lowest cost"),
+            ("gemini-2.5-flash",       "fast, recommended"),
+            ("gemini-2.5-flash-lite",  "cheapest — $0.10/M input"),
         ];
         for (m, d) in gemini {
             println!("      {:<34} {}", m.cyan(), d.dimmed());

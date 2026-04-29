@@ -42,6 +42,8 @@ pub async fn fetch_available_models(api_key: &str) -> Result<Vec<ModelInfo>> {
 /// Filter to coding-relevant models only.
 pub fn filter_coding_models(models: &[ModelInfo]) -> Vec<ModelInfo> {
     let code_relevant: Vec<&str> = vec![
+        "gemini-3.1",
+        "gemini-3",
         "gemini-2.5-pro",
         "gemini-2.5-flash",
         "gemini-2.0-flash",
@@ -245,10 +247,13 @@ pub fn resolve_best_model(fetched: &[ModelInfo]) -> String {
 
     // Priority order for default model selection
     let preferences = [
+        "gemini-3.1-flash",
+        "gemini-3-flash",
         "gemini-2.5-flash",
+        "gemini-3.1-pro",
+        "gemini-3-pro",
         "gemini-2.5-pro",
         "gemini-2.0-flash",
-        "gemini-2.5-flash-lite",
     ];
 
     for pref in &preferences {

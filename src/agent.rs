@@ -143,12 +143,16 @@ fn model_hint(config: &Config) -> String {
 
     let cap = match provider {
         Provider::Gemini => {
-            if model.contains("2.5-pro") || model.contains("pro") {
-                "You have deep reasoning. Use it for complex architecture, cross-file analysis, and security audits. Think through edge cases. Thoroughness over speed."
+            if model.contains("3.1-pro") || model.contains("3-pro") {
+                "You have state-of-the-art reasoning via Gemini 3.1 Pro (80.6% SWE-bench). Use it for complex architecture, security audits, and multi-file refactoring. Thoroughness over speed."
+            } else if model.contains("3.1-flash") || model.contains("3-flash") {
+                "You are running on Gemini 3 Flash — Google's latest fast model. Excellent speed with strong reasoning."
+            } else if model.contains("2.5-pro") || model.contains("2.5-pro") {
+                "You have deep reasoning via Gemini 2.5 Pro. Use it for complex architecture, cross-file analysis, and security audits."
             } else if model.contains("2.5-flash-lite") {
                 "You are on a lightweight model. Be concise. Prefer single-file changes. Use tools efficiently."
             } else if model.contains("2.5-flash") || model.contains("2.5") {
-                "You are fast and accurate. For simple tasks, act immediately. For complex tasks, plan quickly then execute."
+                "You are fast and accurate. For simple tasks, act immediately."
             } else {
                 ""
             }
@@ -461,10 +465,10 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                                 Err(_) => {
                                     // API unreachable — show known-good set
                                     for (m, d) in [
+                                        ("gemini-3.1-pro",         "1M ctx  80.6% SWE-bench"),
+                                        ("gemini-3-flash",         "1M ctx  latest fast"),
                                         ("gemini-2.5-pro",         "1M ctx  deep reasoning"),
-                                        ("gemini-2.5-flash",       "1M ctx  fastest, default"),
-                                        ("gemini-2.5-flash-lite",  "1M ctx  cheapest 2.5"),
-                                        ("gemini-2.0-flash",       "1M ctx  previous gen"),
+                                        ("gemini-2.5-flash",       "1M ctx  fast & reliable"),
                                     ] {
                                         let marker = if m == current_model { "->".green() } else { "  ".normal() };
                                         println!("  {} {:<38} {}", marker, m.cyan(), d.dimmed());
@@ -1682,7 +1686,7 @@ fn auto_route_model(config: &Config, message: &str) -> (&'static str, &'static s
             } else if has_openai {
                 ("o3", "complex task → OpenAI reasoning")
             } else {
-                ("gemini-2.5-pro", "complex task → Gemini deep reasoning")
+                ("gemini-3-pro", "complex task → Gemini 3 Pro reasoning")
             }
         }
         "low" => {
@@ -1692,7 +1696,7 @@ fn auto_route_model(config: &Config, message: &str) -> (&'static str, &'static s
             } else if has_anthropic {
                 ("claude-4-sonnet", "simple task → Claude")
             } else {
-                ("gemini-2.5-flash-lite", "simple task → cheapest Gemini")
+                ("gemini-3-flash", "simple task → Gemini 3 Flash")
             }
         }
         _ => {
@@ -1702,7 +1706,7 @@ fn auto_route_model(config: &Config, message: &str) -> (&'static str, &'static s
             } else if has_openai {
                 ("gpt-4.1", "normal task → GPT balanced")
             } else {
-                ("gemini-2.5-flash", "normal task → Gemini balanced")
+                ("gemini-3-flash", "normal task → Gemini 3 Flash")
             }
         }
     }
