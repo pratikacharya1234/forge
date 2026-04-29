@@ -114,20 +114,55 @@ async fn main() -> Result<()> {
         );
     }
 
-    // Resolve model: CLI arg → config file → auto-detect from API → hardcoded fallback
+    // Resolve model: CLI arg → config file → auto-detect from best available provider
     let model = if let Some(m) = args.model.clone().or(file_cfg.model.clone()) {
         m
-    } else if !api_key.is_empty() {
-        match models::fetch_available_models(&api_key).await {
-            Ok(all) => {
-                let best = models::resolve_best_model(&all);
-                eprintln!("  Auto-detected best model: {}", best);
-                best
-            }
-            Err(_) => "gemini-2.5-flash".to_string()
-        }
     } else {
-        "gemini-2.5-flash".to_string()
+        // Try Anthropic first, then OpenAI, then Gemini
+        let anthropic_key = args.anthropic_api_key.clone()
+            .or(file_cfg.anthropic_api_key.clone())
+            .or_else(|| std::env::var("ANTHROPIC_API_KEY").ok())
+            .filter(|k| !k.is_empty());
+
+        let openai_key = args.openai_api_key.clone()
+            .or(file_cfg.openai_api_key.clone())
+            .or_else(|| std::env::var("OPENAI_API_KEY").ok())
+            .filter(|k| !k.is_empty());
+
+        if let Some(key) = anthropic_key {
+            match models::fetch_anthropic_models(&key).await {
+                Ok(list) => {
+                    let best = models::resolve_best_anthropic(&list);
+                    eprintln!("  Auto-detected: {} (Anthropic, {} models)", best, list.len());
+                    best
+                }
+                Err(_) => "claude-sonnet-4-20250514".to_string()
+            }
+        } else if let Some(key) = openai_key {
+            match models::fetch_openai_models(&key).await {
+                Ok(list) => {
+                    let best = models::resolve_best_openai(&list);
+                    eprintln!("  Auto-detected: {} (OpenAI, {} models)", best, list.len());
+                    best
+                }
+                Err(_) => "gpt-4o".to_string()
+            }
+        } else if !api_key.is_empty() {
+            match models::fetch_available_models(&api_key).await {
+                Ok(all) => {
+                    let best = models::resolve_best_model(&all);
+                    eprintln!("  Auto-detected: {} (Gemini, {} models)", best, all.len());
+                    best
+                }
+                Err(_) => "gemini-2.5-flash".to_string()
+            }
+        } else {
+            anyhow::bail!(
+                "No API key found for any provider.\n\
+                 Set FORGE_API_KEY, ANTHROPIC_API_KEY, or OPENAI_API_KEY.\n\
+                 Free keys: https://aistudio.google.com/apikey"
+            );
+        }
     };
 
     let thinking = args.think || file_cfg.thinking;

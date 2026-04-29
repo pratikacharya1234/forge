@@ -270,3 +270,29 @@ pub fn resolve_best_model(fetched: &[ModelInfo]) -> String {
     // Nothing found at all — return the API default
     "gemini-2.5-flash".to_string()
 }
+
+/// Pick the best Claude model from the API response.
+pub fn resolve_best_anthropic(models: &[(String, String)]) -> String {
+    let preferences = ["claude-sonnet-4", "claude-4-sonnet", "claude-4-opus", "claude-3-5-sonnet", "claude-3-opus"];
+    for pref in &preferences {
+        for (id, _) in models {
+            if id.contains(pref) {
+                return id.clone();
+            }
+        }
+    }
+    models.first().map(|(id, _)| id.clone()).unwrap_or_else(|| "claude-sonnet-4-20250514".to_string())
+}
+
+/// Pick the best OpenAI model from the API response.
+pub fn resolve_best_openai(models: &[(String, String)]) -> String {
+    let preferences = ["gpt-4.1", "gpt-4o", "o3", "o4-mini", "gpt-4"];
+    for pref in &preferences {
+        for (id, _) in models {
+            if id.starts_with(pref) {
+                return id.clone();
+            }
+        }
+    }
+    models.first().map(|(id, _)| id.clone()).unwrap_or_else(|| "gpt-4o".to_string())
+}
