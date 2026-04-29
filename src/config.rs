@@ -23,6 +23,7 @@ pub struct Config {
     pub anthropic_api_key: Option<String>,
     pub openai_api_key: Option<String>,
     pub explain_before_execute: bool,
+    pub api_base: Option<String>,
 }
 
 impl Default for Config {
@@ -43,6 +44,7 @@ impl Default for Config {
             anthropic_api_key: None,
             openai_api_key: None,
             explain_before_execute: false,
+            api_base: None,
         }
     }
 }
@@ -99,6 +101,7 @@ struct FileConfig {
     anthropic_api_key: Option<String>,
     openai_api_key: Option<String>,
     explain_before_execute: Option<bool>,
+    api_base: Option<String>,
 
     #[serde(default)]
     profiles: HashMap<String, ProfileConfig>,
@@ -149,6 +152,7 @@ impl Config {
             anthropic_api_key: cfg.anthropic_api_key,
             openai_api_key: cfg.openai_api_key,
             explain_before_execute: cfg.explain_before_execute.unwrap_or(false),
+            api_base: cfg.api_base.clone(),
         }
     }
 }
@@ -170,6 +174,7 @@ pub struct FileDefaults {
     pub anthropic_api_key: Option<String>,
     pub openai_api_key: Option<String>,
     pub explain_before_execute: bool,
+    pub api_base: Option<String>,
 }
 
 pub fn load_profile(name: &str) -> Option<ProfileConfig> {

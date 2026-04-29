@@ -1227,6 +1227,7 @@ fn active_config(
         anthropic_api_key: base.anthropic_api_key.clone(),
         openai_api_key: base.openai_api_key.clone(),
         explain_before_execute: base.explain_before_execute,
+        api_base: None,
     }
 }
 

@@ -61,6 +61,10 @@ struct Args {
     #[clap(long)]
     pack: Option<String>,
 
+    /// Custom API base URL for proxying (e.g., LiteLLM, OpenRouter).
+    #[clap(long)]
+    api_base: Option<String>,
+
     /// Max tool-call iterations per turn before pausing (0 = unlimited).
     #[clap(long, default_value = "50")]
     max_iter: u32,
@@ -199,6 +203,7 @@ async fn main() -> Result<()> {
         anthropic_api_key: args.anthropic_api_key.or(file_cfg.anthropic_api_key),
         openai_api_key: args.openai_api_key.or(file_cfg.openai_api_key),
         explain_before_execute: args.explain || file_cfg.explain_before_execute,
+        api_base: args.api_base,
     };
 
     if let Some(prompt) = args.prompt {

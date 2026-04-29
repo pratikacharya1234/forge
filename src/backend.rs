@@ -138,6 +138,7 @@ pub struct GeminiBackend {
     http: reqwest::Client,
     pub model: String,
     api_key: String,
+    api_base: Option<String>,
 }
 
 impl GeminiBackend {
@@ -146,13 +147,18 @@ impl GeminiBackend {
             http: reqwest::Client::new(),
             model: config.model.clone(),
             api_key: config.api_key.clone(),
+            api_base: config.api_base.clone(),
         }
+    }
+
+    fn base_url(&self) -> &str {
+        self.api_base.as_deref().unwrap_or("https://generativelanguage.googleapis.com")
     }
 
     pub async fn generate(&self, request: GenerateContentRequest) -> Result<GenerateContentResponse> {
         let url = format!(
-            "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent?key={}",
-            self.model, self.api_key
+            "{}/v1beta/models/{}:generateContent?key={}",
+            self.base_url(), self.model, self.api_key
         );
         let resp = self.http.post(&url).json(&request).send().await
             .context("Network request to Gemini API failed")?;
@@ -177,8 +183,8 @@ impl GeminiBackend {
         on_thought: &mut impl FnMut(&str),
     ) -> Result<GenerateContentResponse> {
         let url = format!(
-            "https://generativelanguage.googleapis.com/v1beta/models/{}:streamGenerateContent?alt=sse&key={}",
-            self.model, self.api_key
+            "{}/v1beta/models/{}:streamGenerateContent?alt=sse&key={}",
+            self.base_url(), self.model, self.api_key
         );
         let resp = self.http.post(&url).json(request).send().await
             .context("Streaming request to Gemini API failed")?;
