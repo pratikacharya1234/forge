@@ -20,10 +20,7 @@ pub struct CiResult {
 }
 
 pub async fn run_ci(config: &Config, prompt: &str) -> Result<CiResult> {
-    // Build client
     let client = BackendClient::new(config)?;
-
-    // Run agent non-interactively
     let result = agent::run_ci_agent(&client, config, prompt).await?;
 
     Ok(result)
@@ -47,7 +44,6 @@ pub async fn run_pipeline(config: &Config, name: &str) -> Result<()> {
         .and_then(|s| s.as_array())
         .context("Pipeline must have a [[steps]] array")?;
 
-    let client = BackendClient::new(config)?;
 
     for (i, step) in steps.iter().enumerate() {
         let task = step.get("task")

@@ -23,6 +23,7 @@ pub struct Config {
     pub anthropic_api_key: Option<String>,
     pub openai_api_key: Option<String>,
     pub explain_before_execute: bool,
+    #[allow(dead_code)]
     pub api_base: Option<String>,
 }
 
@@ -174,6 +175,7 @@ pub struct FileDefaults {
     pub anthropic_api_key: Option<String>,
     pub openai_api_key: Option<String>,
     pub explain_before_execute: bool,
+    #[allow(dead_code)]
     pub api_base: Option<String>,
 }
 

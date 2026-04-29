@@ -1376,6 +1376,7 @@ async fn agentic_loop(
         // ── API call with model fallback ──────────────────────────────────────
         let mut fallback_attempt = 0u32;
         let max_fallbacks = 3u32;
+        #[allow(unused_assignments)]
         let mut fallback_client: Option<BackendClient> = None;
         let mut current_client = client;
         let mut current_model: std::borrow::Cow<str> = std::borrow::Cow::Borrowed(&config.model);
