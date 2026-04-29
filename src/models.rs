@@ -57,6 +57,7 @@ pub fn filter_coding_models(models: &[ModelInfo]) -> Vec<ModelInfo> {
     // Non-coding model types that may advertise generateContent but don't work for chat
     let skip_keywords: Vec<&str> = vec![
         "-tts", "tts-", "-embedding", "-imagen", "-veo",
+        "-lite-preview",
     ];
 
     let mut filtered: Vec<ModelInfo> = models
@@ -264,13 +265,13 @@ pub fn resolve_best_model(fetched: &[ModelInfo]) -> String {
 
     for pref in &preferences {
         if let Some(m) = coding.iter().find(|m| m.name.contains(pref)) {
-            return m.name.clone();
+            return m.name.trim_start_matches("models/").to_string();
         }
     }
 
     // No preferred model found — use the first coding model available
     if let Some(m) = coding.first() {
-        return m.name.clone();
+        return m.name.trim_start_matches("models/").to_string();
     }
 
     // Nothing found at all — return the API default
