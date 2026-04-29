@@ -1,0 +1,27 @@
+# .replit config for FORGE
+# Downloads the prebuilt Linux x86_64 binary on Replit
+
+run = """
+echo ""
+echo "  ╔══════════════════════════════════════╗"
+echo "  ║       🛠️  FORGE — Ready           ║"
+echo "  ╚══════════════════════════════════════╝"
+echo ""
+echo "  First time? Set your API key:"
+echo "    export GEMINI_API_KEY='your-key-here'"
+echo ""
+echo "  Get a free key: aistudio.google.com/apikey"
+echo ""
+echo "  Then run: forge-cli"
+echo ""
+"""
+
+[nix]
+channel = "stable-24_05"
+
+[deployment]
+run = ["sh", "-c", "echo 'FORGE runs in the Shell tab. Open it and type: forge-cli'"]
+
+[[hints]]
+regex = "GEMINI_API_KEY"
+message = "Set your Gemini API key: export GEMINI_API_KEY='your-key'"
