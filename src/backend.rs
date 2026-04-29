@@ -17,17 +17,25 @@ pub enum Provider {
     Gemini,
     Anthropic,
     OpenAI,
+    Ollama,
 }
 
 /// Detect provider from model name.
 pub fn detect_provider(model: &str) -> Provider {
     let lower = model.to_lowercase();
-    if lower.starts_with("gemini") {
+    if lower.starts_with("gemini") || lower.contains("gemini") {
         Provider::Gemini
-    } else if lower.starts_with("claude") {
+    } else if lower.starts_with("claude") || lower.contains("claude") {
         Provider::Anthropic
     } else if lower.starts_with("gpt") || lower.starts_with("o1") || lower.starts_with("o3") || lower.starts_with("o4") {
         Provider::OpenAI
+    } else if lower.contains("llama") || lower.contains("mistral") || lower.contains("codellama")
+        || lower.contains("phi") || lower.contains("qwen") || lower.contains("deepseek")
+        || lower.contains("gemma") || lower.contains("mixtral") || lower.contains("dolphin")
+        || lower.contains("openhermes") || lower.contains("orca") || lower.contains("neural")
+        || lower.contains("yi-") || lower.contains("falcon") || lower.contains("command-r")
+    {
+        Provider::Ollama
     } else {
         // Default: treat as Gemini (common models like gemini-2.5-flash)
         Provider::Gemini
@@ -40,6 +48,7 @@ pub enum BackendClient {
     Gemini(GeminiBackend),
     Anthropic(AnthropicBackend),
     OpenAI(OpenAIBackend),
+    Ollama(OllamaBackend),
 }
 
 impl BackendClient {
@@ -60,6 +69,9 @@ impl BackendClient {
                 }
                 Ok(Self::OpenAI(OpenAIBackend::new(key, &config.model)))
             }
+            Provider::Ollama => {
+                Ok(Self::Ollama(OllamaBackend::new(&config.model)))
+            }
         }
     }
 
@@ -69,6 +81,7 @@ impl BackendClient {
             Self::Gemini(_) => Provider::Gemini,
             Self::Anthropic(_) => Provider::Anthropic,
             Self::OpenAI(_) => Provider::OpenAI,
+            Self::Ollama(_) => Provider::Ollama,
         }
     }
 
@@ -78,6 +91,7 @@ impl BackendClient {
             Self::Gemini(b) => &b.model,
             Self::Anthropic(b) => &b.model,
             Self::OpenAI(b) => &b.model,
+            Self::Ollama(b) => &b.model,
         }
     }
 
@@ -87,6 +101,7 @@ impl BackendClient {
             Self::Gemini(_) => true,
             Self::Anthropic(b) => b.model.contains("opus") || b.model.contains("sonnet"),
             Self::OpenAI(_) => false, // GPT doesn't stream thinking tokens
+            Self::Ollama(_) => false,
         }
     }
 
@@ -98,6 +113,7 @@ impl BackendClient {
             Self::Gemini(b) => b.generate(request).await,
             Self::Anthropic(b) => b.generate(request).await,
             Self::OpenAI(b) => b.generate(request).await,
+            Self::Ollama(b) => b.generate(request).await,
         }
     }
 
@@ -111,6 +127,7 @@ impl BackendClient {
             Self::Gemini(b) => b.generate_streaming(request, on_text, on_thought).await,
             Self::Anthropic(b) => b.generate_streaming(request, on_text, on_thought).await,
             Self::OpenAI(b) => b.generate_streaming(request, on_text, on_thought).await,
+            Self::Ollama(b) => b.generate_streaming(request, on_text, on_thought).await,
         }
     }
 }
@@ -1211,6 +1228,275 @@ impl OpenAIBackend {
             total_token_count: Some(u.total_tokens),
             thoughts_token_count: None,
         });
+
+        Ok(GenerateContentResponse {
+            candidates: Some(vec![Candidate {
+                content: Some(Content { role: "assistant".into(), parts }),
+                finish_reason,
+            }]),
+            usage_metadata: usage_meta,
+            error: None,
+        })
+    }
+}
+
+// ── Ollama backend (localhost:11434 OpenAI-compatible API) ────────────────────
+
+pub struct OllamaBackend {
+    http: reqwest::Client,
+    pub model: String,
+    base_url: String,
+}
+
+impl OllamaBackend {
+    pub fn new(model: &str) -> Self {
+        let base_url = std::env::var("OLLAMA_HOST")
+            .unwrap_or_else(|_| "http://localhost:11434".to_string());
+        Self {
+            http: reqwest::Client::new(),
+            model: model.to_string(),
+            base_url,
+        }
+    }
+
+    pub async fn generate(&self, request: GenerateContentRequest) -> Result<GenerateContentResponse> {
+        // Non-streaming fallback — just collects the stream
+        let mut text = String::new();
+        let mut on_text = |s: &str| { text.push_str(s); };
+        let mut on_thought = |_: &str| {};
+        self.generate_streaming(&request, &mut on_text, &mut on_thought).await
+    }
+
+    fn convert_request(&self, request: &GenerateContentRequest) -> serde_json::Value {
+        let mut messages: Vec<serde_json::Value> = Vec::new();
+
+        // System instruction as first message
+        if let Some(ref sys) = request.system_instruction {
+            let sys_text: String = sys.parts.iter().filter_map(|p| {
+                if let Part::Text { text, .. } = p { Some(text.as_str()) } else { None }
+            }).collect::<Vec<_>>().join("\n");
+            if !sys_text.is_empty() {
+                messages.push(serde_json::json!({
+                    "role": "system",
+                    "content": sys_text
+                }));
+            }
+        }
+
+        for content in &request.contents {
+            let role = match content.role.as_str() {
+                "user" => "user",
+                "model" | "assistant" => "assistant",
+                _ => "user",
+            };
+
+            let mut text_parts: Vec<String> = Vec::new();
+            let mut tool_calls: Vec<serde_json::Value> = Vec::new();
+            let mut tool_results: Vec<serde_json::Value> = Vec::new();
+
+            for part in &content.parts {
+                match part {
+                    Part::Text { text, .. } => text_parts.push(text.clone()),
+                    Part::FunctionCall { function_call, .. } => {
+                        tool_calls.push(serde_json::json!({
+                            "id": format!("call_{}", tool_calls.len()),
+                            "type": "function",
+                            "function": {
+                                "name": function_call.name,
+                                "arguments": serde_json::to_string(&function_call.args).unwrap_or_default()
+                            }
+                        }));
+                    }
+                    Part::FunctionResponse { function_response } => {
+                        let tc_id = function_response.id.as_deref().unwrap_or(&function_response.name);
+                        let result_text = function_response.response.get("content")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("");
+                        tool_results.push(serde_json::json!({
+                            "role": "tool",
+                            "tool_call_id": tc_id,
+                            "content": result_text
+                        }));
+                    }
+                    _ => {}
+                }
+            }
+
+            // Push text message
+            if !text_parts.is_empty() || (tool_calls.is_empty() && tool_results.is_empty()) {
+                let text = if text_parts.is_empty() { String::new() } else { text_parts.join("\n") };
+                messages.push(serde_json::json!({
+                    "role": role,
+                    "content": text
+                }));
+            }
+
+            // Push tool calls (as assistant message)
+            if !tool_calls.is_empty() {
+                messages.push(serde_json::json!({
+                    "role": "assistant",
+                    "content": null,
+                    "tool_calls": tool_calls
+                }));
+            }
+
+            // Push tool results
+            for tr in tool_results {
+                messages.push(tr);
+            }
+        }
+
+        let mut body = serde_json::json!({
+            "model": self.model,
+            "messages": messages,
+            "stream": true
+        });
+
+        // Add tools if present
+        let mut openai_tools: Vec<serde_json::Value> = Vec::new();
+        for t in &request.tools {
+            if let Some(fds) = t.get("functionDeclarations").and_then(|f: &serde_json::Value| f.as_array()) {
+                for fd in fds {
+                    let name = fd.get("name").and_then(|v: &serde_json::Value| v.as_str());
+                    let desc = fd.get("description").and_then(|v: &serde_json::Value| v.as_str());
+                    if let (Some(name), Some(desc)) = (name, desc) {
+                        openai_tools.push(serde_json::json!({
+                            "type": "function",
+                            "function": {
+                                "name": name,
+                                "description": desc,
+                                "parameters": fd.get("parameters").cloned().unwrap_or(serde_json::json!({}))
+                            }
+                        }));
+                    }
+                }
+            }
+        }
+        if !openai_tools.is_empty() {
+            body["tools"] = serde_json::json!(openai_tools);
+        }
+
+        body
+    }
+
+    pub async fn generate_streaming(
+        &self,
+        request: &GenerateContentRequest,
+        on_text: &mut impl FnMut(&str),
+        _on_thought: &mut impl FnMut(&str),
+    ) -> Result<GenerateContentResponse> {
+        let body = self.convert_request(request);
+        let url = format!("{}/v1/chat/completions", self.base_url);
+
+        let resp = self.http.post(&url)
+            .json(&body)
+            .send()
+            .await
+            .context("Ollama streaming request failed — is Ollama running? (ollama serve)")?;
+
+        let status = resp.status();
+        if !status.is_success() {
+            let err_body = resp.text().await.unwrap_or_default();
+            anyhow::bail!("Ollama API HTTP {}: {}", status, &err_body[..err_body.len().min(400)]);
+        }
+
+        let mut stream = resp.bytes_stream();
+        let mut full_text = String::new();
+        let mut tool_calls_acc: Vec<serde_json::Value> = Vec::new();
+        let mut finish_reason: Option<String> = None;
+        let mut prompt_tokens: u32 = 0;
+        let mut completion_tokens: u32 = 0;
+
+        while let Some(chunk) = stream.next().await {
+            let chunk = chunk?;
+            let text = String::from_utf8_lossy(&chunk);
+
+            for line in text.lines() {
+                let line = line.trim();
+                if line.is_empty() || line == "data: [DONE]" { continue; }
+                let json_str = line.strip_prefix("data: ").unwrap_or(line);
+
+                if let Ok(event) = serde_json::from_str::<serde_json::Value>(json_str) {
+                    if let Some(choices) = event.get("choices").and_then(|c| c.as_array()) {
+                        for choice in choices {
+                            // Text delta
+                            if let Some(delta) = choice.get("delta") {
+                                if let Some(content) = delta.get("content").and_then(|c| c.as_str()) {
+                                    if !content.is_empty() {
+                                        on_text(content);
+                                        full_text.push_str(content);
+                                    }
+                                }
+                                // Tool call delta
+                                if let Some(tc_deltas) = delta.get("tool_calls").and_then(|t| t.as_array()) {
+                                    for tc in tc_deltas {
+                                        let idx = tc.get("index").and_then(|i| i.as_u64()).unwrap_or(0) as usize;
+                                        while tool_calls_acc.len() <= idx {
+                                            tool_calls_acc.push(serde_json::json!({
+                                                "id": "", "type": "function",
+                                                "function": { "name": "", "arguments": "" }
+                                            }));
+                                        }
+                                        if let Some(id) = tc.get("id").and_then(|i| i.as_str()) {
+                                            tool_calls_acc[idx]["id"] = serde_json::json!(id);
+                                        }
+                                        if let Some(func) = tc.get("function") {
+                                            if let Some(name) = func.get("name").and_then(|n| n.as_str()) {
+                                                if !name.is_empty() {
+                                                    tool_calls_acc[idx]["function"]["name"] = serde_json::json!(name);
+                                                }
+                                            }
+                                            if let Some(args) = func.get("arguments").and_then(|a| a.as_str()) {
+                                                let current = tool_calls_acc[idx]["function"]["arguments"].as_str().unwrap_or("");
+                                                tool_calls_acc[idx]["function"]["arguments"] = serde_json::json!(format!("{}{}", current, args));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            if let Some(fr) = choice.get("finish_reason").and_then(|f| f.as_str()) {
+                                finish_reason = Some(fr.to_string());
+                            }
+                        }
+                    }
+                    // Usage
+                    if let Some(usage) = event.get("usage") {
+                        prompt_tokens = usage.get("prompt_tokens").and_then(|t| t.as_u64()).unwrap_or(0) as u32;
+                        completion_tokens = usage.get("completion_tokens").and_then(|t| t.as_u64()).unwrap_or(0) as u32;
+                    }
+                }
+            }
+        }
+
+        // Build parts from response
+        let mut parts: Vec<Part> = Vec::new();
+
+        if !full_text.is_empty() {
+            parts.push(Part::text(full_text));
+        }
+
+        for tc in &tool_calls_acc {
+            let name = tc["function"]["name"].as_str().unwrap_or("");
+            let args_str = tc["function"]["arguments"].as_str().unwrap_or("{}");
+            let args: serde_json::Value = serde_json::from_str(args_str).unwrap_or(serde_json::json!({}));
+            if !name.is_empty() {
+                parts.push(Part::FunctionCall {
+                    function_call: FunctionCall { name: name.to_string(), args, thought_signature: None },
+                    thought_signature: None,
+                });
+            }
+        }
+
+        let usage_meta = if prompt_tokens > 0 || completion_tokens > 0 {
+            Some(UsageMetadata {
+                prompt_token_count: Some(prompt_tokens),
+                candidates_token_count: Some(completion_tokens),
+                total_token_count: Some(prompt_tokens + completion_tokens),
+                thoughts_token_count: None,
+            })
+        } else {
+            None
+        };
 
         Ok(GenerateContentResponse {
             candidates: Some(vec![Candidate {

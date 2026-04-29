@@ -163,6 +163,9 @@ fn model_hint(config: &Config) -> String {
                 "You are running on GPT. Strong code generation and reasoning."
             }
         }
+        Provider::Ollama => {
+            "You are running on a local model via Ollama. Work efficiently with the available context."
+        }
     };
 
     if cap.is_empty() {
@@ -523,7 +526,7 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                             let prov_name = match provider {
                                 Provider::Gemini => "Gemini",
                                 Provider::Anthropic => "Anthropic",
-                                Provider::OpenAI => "OpenAI",
+                                Provider::OpenAI => "OpenAI", Provider::Ollama => "Ollama (local)",
                             };
                             println!("{} {}", "Current model:".dimmed(), current_model.cyan());
                             println!("{} {}", "Provider:".dimmed(), prov_name.dimmed());
@@ -551,7 +554,7 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                                 } else {
                                     current_model = model.to_string();
                                     println!("{} {} (provider: {})", "Model:".dimmed(), current_model.cyan(),
-                                        match new_provider { Provider::Gemini => "Gemini", Provider::Anthropic => "Claude", Provider::OpenAI => "OpenAI" }.dimmed());
+                                        match new_provider { Provider::Gemini => "Gemini", Provider::Anthropic => "Claude", Provider::OpenAI => "OpenAI", Provider::Ollama => "Ollama (local)" }.dimmed());
                                 }
                             } else {
                                 current_model = model.to_string();

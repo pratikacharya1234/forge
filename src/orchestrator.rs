@@ -476,6 +476,7 @@ impl TaskOrchestrator {
                     "gemini-3-pro".into()
                 }
             }
+            Provider::Ollama => current.to_string(),
         }
     }
 
