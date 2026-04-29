@@ -54,6 +54,11 @@ pub fn filter_coding_models(models: &[ModelInfo]) -> Vec<ModelInfo> {
         "nano banana", "nano", "banana",
     ];
 
+    // Non-coding model types that may advertise generateContent but don't work for chat
+    let skip_keywords: Vec<&str> = vec![
+        "-tts", "tts-", "-embedding", "-imagen", "-veo",
+    ];
+
     let mut filtered: Vec<ModelInfo> = models
         .iter()
         .filter(|m| {
@@ -68,7 +73,8 @@ pub fn filter_coding_models(models: &[ModelInfo]) -> Vec<ModelInfo> {
             let is_relevant = code_relevant.iter().any(|p| name.contains(p));
             let is_latest = !name.contains("1.0") && !name.contains("1.5");
             let has_junk_display = skip_displays.iter().any(|j| display.contains(*j));
-            has_gemini && is_chat_model && is_relevant && is_latest && !has_junk_display
+            let is_non_coding = skip_keywords.iter().any(|k| name.contains(*k));
+            has_gemini && is_chat_model && is_relevant && is_latest && !has_junk_display && !is_non_coding
         })
         .cloned()
         .collect();
