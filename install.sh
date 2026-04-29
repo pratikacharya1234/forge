@@ -16,7 +16,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # ────────────────────────────────────────────────────────────────────────────────
 
 REPO="pratikacharya1234/forge"
-BINARY="forge"
+BINARY="forge-cli"
 INSTALL_DIR="${FORGE_INSTALL_DIR:-/usr/local/bin}"
 VERSION="${FORGE_VERSION:-latest}"
 
@@ -91,9 +91,9 @@ install_from_release() {
     local tmpdir
 
     if [ "$VERSION" = "latest" ]; then
-        download_url="https://github.com/${REPO}/releases/latest/download/forge-${platform}.tar.gz"
+        download_url="https://github.com/${REPO}/releases/latest/download/forge-cli-${platform}.tar.gz"
     else
-        download_url="https://github.com/${REPO}/releases/download/v${VERSION}/forge-${platform}.tar.gz"
+        download_url="https://github.com/${REPO}/releases/download/v${VERSION}/forge-cli-${platform}.tar.gz"
     fi
 
     tmpdir="$(mktemp -d)"
@@ -102,12 +102,12 @@ install_from_release() {
 
     step "Downloading FORGE v${VERSION} for ${platform}..."
     if ! curl -fsSL --connect-timeout 10 --max-time 60 \
-        "$download_url" -o "$tmpdir/forge.tar.gz" 2>/dev/null; then
+        "$download_url" -o "$tmpdir/forge-cli.tar.gz" 2>/dev/null; then
         return 1
     fi
 
     step "Extracting..."
-    if ! tar -xzf "$tmpdir/forge.tar.gz" -C "$tmpdir" 2>/dev/null; then
+    if ! tar -xzf "$tmpdir/forge-cli.tar.gz" -C "$tmpdir" 2>/dev/null; then
         return 1
     fi
 
@@ -222,10 +222,10 @@ install_binary() {
     step "Next steps:"
     echo "  1. Get a free API key → https://aistudio.google.com/apikey"
     echo "  2. Set it:           export GEMINI_API_KEY=\"your-key-here\""
-    echo "  3. Run it:           forge"
+    echo "  3. Run it:           forge-cli"
     echo ""
-    echo "  With Claude:         forge --model claude-4-sonnet --anthropic-api-key \"sk-ant-...\""
-    echo "  With GPT:            forge --model gpt-4.1 --openai-api-key \"sk-...\""
+    echo "  With Claude:         forge-cli --model claude-4-sonnet --anthropic-api-key \"sk-ant-...\""
+    echo "  With GPT:            forge-cli --model gpt-4.1 --openai-api-key \"sk-...\""
     echo ""
 }
 

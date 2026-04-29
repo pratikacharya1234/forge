@@ -7,7 +7,7 @@ set -euo pipefail
 # Usage: bash release.sh [VERSION]
 #   If VERSION is omitted, reads from Cargo.toml.
 #
-# Output: packages/forge-{platform}.tar.gz for each platform
+# Output: packages/forge-cli-{platform}.tar.gz for each platform
 # ────────────────────────────────────────────────────────────────────────────────
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -19,7 +19,7 @@ if [ -z "$VERSION" ]; then
 fi
 
 PACKAGES_DIR="$SCRIPT_DIR/packages"
-BINARY="forge"
+BINARY="forge-cli"
 
 # Platforms to build
 PLATFORMS=(
@@ -71,11 +71,11 @@ local_name="$(echo "$(uname -s)" | tr '[:upper:]' '[:lower:]')-${local_arch}"
 info "Native: ${local_name}"
 
 cd "$PACKAGES_DIR"
-tar -czf "forge-${local_name}.tar.gz" "$BINARY"
+tar -czf "forge-cli-${local_name}.tar.gz" "$BINARY"
 rm "$BINARY"
 cd "$SCRIPT_DIR"
 
-step "  → packages/forge-${local_name}.tar.gz"
+step "  → packages/forge-cli-${local_name}.tar.gz"
 
 # ── Cross-compile for other platforms ────────────────────────────────────────
 
@@ -93,10 +93,10 @@ if command -v cross &>/dev/null; then
             if [ -f "target/${rust_target}/release/${BINARY}" ]; then
                 cp "target/${rust_target}/release/${BINARY}" "$PACKAGES_DIR/${BINARY}"
                 cd "$PACKAGES_DIR"
-                tar -czf "forge-${pkg_name}.tar.gz" "$BINARY"
+                tar -czf "forge-cli-${pkg_name}.tar.gz" "$BINARY"
                 rm "$BINARY"
                 cd "$SCRIPT_DIR"
-                info "  → packages/forge-${pkg_name}.tar.gz"
+                info "  → packages/forge-cli-${pkg_name}.tar.gz"
             else
                 error "  Binary not found for ${rust_target}"
             fi
@@ -136,7 +136,7 @@ if [ -f "$PACKAGES_DIR/checksums.sha256" ]; then
 fi
 echo ""
 step "Upload to GitHub:"
-echo "  1. Create release: gh release create v${VERSION} packages/forge-*.tar.gz"
+echo "  1. Create release: gh release create v${VERSION} packages/forge-cli-*.tar.gz"
 echo "  2. Or manually at:  https://github.com/pratikacharya1234/forge/releases/new"
 echo "  3. Tag: v${VERSION}"
 echo "  4. Attach all .tar.gz and checksums.sha256"

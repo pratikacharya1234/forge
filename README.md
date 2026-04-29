@@ -56,31 +56,31 @@ cargo build --release
 
 # Get a free API key and run
 export FORGE_API_KEY="your-gemini-key"
-forge
+forge-cli
 ```
 
 ## Usage
 
 ```bash
 # Interactive session
-forge
+forge-cli
 
 # Full task pipeline — research, decompose, dispatch, verify
-forge --prompt "/task add rate limiting to the API endpoints"
+forge-cli --prompt "/task add rate limiting to the API endpoints"
 
 # With specific models
-forge --model claude-4-sonnet --anthropic-api-key "sk-ant-..."
-forge --model gpt-4.1 --openai-api-key "sk-..."
-forge --model auto     # auto-select best model per task
+forge-cli --model claude-4-sonnet --anthropic-api-key "sk-ant-..."
+forge-cli --model gpt-4.1 --openai-api-key "sk-..."
+forge-cli --model auto     # auto-select best model per task
 
 # With thinking mode and web grounding
-forge --think --grounding --model gemini-2.5-pro
+forge-cli --think --grounding --model gemini-2.5-pro
 
 # Single prompt, auto-apply, exit
-forge --auto-apply --prompt "fix all compiler warnings"
+forge-cli --auto-apply --prompt "fix all compiler warnings"
 
 # Test-fix loop
-forge --prompt "/test-fix 'cargo test' 5"
+forge-cli --prompt "/test-fix 'cargo test' 5"
 ```
 
 ## Key Commands

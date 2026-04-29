@@ -6,7 +6,7 @@ description = "Multi-model terminal AI coding agent — forge code with any mode
 authors = ["pratikacharya1234"]
 
 [[bin]]
-name = "forge"
+name = "forge-cli"
 path = "src/main.rs"
 
 [dependencies]
