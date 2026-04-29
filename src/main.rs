@@ -28,8 +28,8 @@ mod ui;
     long_about = None
 )]
 struct Args {
-    /// Gemini API key (or set GEMINI_API_KEY env var).
-    #[clap(short = 'k', long, env = "GEMINI_API_KEY")]
+    /// API key for Gemini backend (or set FORGE_API_KEY / GEMINI_API_KEY env var).
+    #[clap(short = 'k', long, env = "FORGE_API_KEY")]
     api_key: Option<String>,
 
     /// Gemini model to use.
@@ -85,10 +85,11 @@ async fn main() -> Result<()> {
 
     let api_key = args.api_key
         .or(file_cfg.api_key)
+        .or_else(|| std::env::var("FORGE_API_KEY").ok())
         .or_else(|| std::env::var("GEMINI_API_KEY").ok())
         .ok_or_else(|| anyhow::anyhow!(
-            "Gemini API key not found.\n\
-             Set GEMINI_API_KEY or use --api-key.\n\
+            "API key not found.\n\
+             Set FORGE_API_KEY or use --api-key.\n\
              Free key: https://aistudio.google.com/apikey"
         ))?;
 
