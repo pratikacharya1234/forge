@@ -21,12 +21,14 @@
           </div>
           <a 
             href={item.url} 
+            target={item.url === '#' ? undefined : '_blank'}
+            rel={item.url === '#' ? undefined : 'noopener noreferrer'}
             class={`w-full py-3 rounded-xl font-bold transition-all ${item.url === '#' ? 'bg-white/5 text-white/20 cursor-not-allowed' : 'bg-white text-black hover:bg-white/90 active:scale-95'}`}
           >
             {item.url === '#' ? 'Coming Soon' : 'Download'}
           </a>
           {item.sha !== 'coming soon' && (
-            <a href="https://github.com/pratikacharya1234/forge/blob/main/packages/checksums.sha256" target="_blank" class="mt-4 text-[10px] text-white/20 hover:text-white/40 font-mono underline">
+            <a href="https://github.com/pratikacharya1234/forge/blob/main/packages/checksums.sha256" target="_blank" rel="noopener noreferrer" class="mt-4 text-[10px] text-white/20 hover:text-white/40 font-mono underline">
               SHA256: {item.sha}
             </a>
           )}

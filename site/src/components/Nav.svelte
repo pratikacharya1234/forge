@@ -16,7 +16,7 @@
   </div>
 
   <div class="flex items-center gap-4">
-    <a href="https://github.com/pratikacharya1234/forge" target="_blank" class="hidden sm:block px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm font-bold transition-all text-white">
+    <a href="https://github.com/pratikacharya1234/forge" target="_blank" rel="noopener noreferrer" class="hidden sm:block px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm font-bold transition-all text-white">
       GitHub
     </a>
     
@@ -42,7 +42,7 @@
       <a href="#use" on:click={() => mobileMenuOpen = false} class="text-white">Usage</a>
       <a href="#download" on:click={() => mobileMenuOpen = false} class="text-white">Download</a>
       <a href="#community" on:click={() => mobileMenuOpen = false} class="text-white">Community</a>
-      <a href="https://github.com/pratikacharya1234/forge" target="_blank" class="text-accent-indigo">GitHub ★</a>
+      <a href="https://github.com/pratikacharya1234/forge" target="_blank" rel="noopener noreferrer" class="text-accent-indigo">GitHub ★</a>
     </div>
   </div>
 {/if}

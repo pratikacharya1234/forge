@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://parixix.iq/sitemap-index.xml

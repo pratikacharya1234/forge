@@ -8,3 +8,13 @@ npm ERR! ERESOLVE unable to res -> Error pattern detected during edit_file — i
 npm WARN EBADENGINE -> Error pattern detected during bash — investigate and fix root cause
 - [1] bash: npm WARN EBADENGINE Unsupported engine {
 npm WARN EBAD -> Error pattern detected during edit_file — investigate and fix root cause [fixed]
+- [1] # npm audit report
+
+astro  <6.1.6
+Severity: moderate
+Astro:  -> Error pattern detected during bash — investigate and fix root cause
+- [1] bash: # npm audit report
+
+astro  <6.1.6
+Severity: moderate
+A -> Error pattern detected during read_file — investigate and fix root cause [fixed]
