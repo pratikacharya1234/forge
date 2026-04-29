@@ -2,7 +2,7 @@
 
 All notable changes to FORGE are documented in this file.
 
-## [1.0.0] — 2026-04-28
+## [0.0.1] — 2026-04-28
 
 ### First Public Release
 
