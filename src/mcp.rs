@@ -258,7 +258,7 @@ impl McpServer {
                     "capabilities": {},
                     "clientInfo": {
                         "name": "forge",
-                        "version": "1.0.0"
+                        "version": "0.0.1"
                     }
                 })),
             )
