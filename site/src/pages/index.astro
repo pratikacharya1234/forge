@@ -1,25 +1,69 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import Nav from '../components/Nav.svelte';
-import Hero from '../components/Hero.astro';
-import Stats from '../components/Stats.svelte';
-import Showcase from '../components/Showcase.svelte';
-import Features from '../components/Features.astro';
-import HowToUse from '../components/HowToUse.svelte';
-import Download from '../components/Download.astro';
-import Community from '../components/Community.astro';
+import ForgeCanvas from '../components/3d/ForgeCanvas.svelte';
+import Terminal from '../components/ui/Terminal.svelte';
 ---
 
-<Layout title="FORGE-CLI | The Multi-Model Terminal AI Coding Agent">
-	<main>
-    <Nav client:load />
+<Layout title="FORGE - The Multi-Model AI Coding Agent">
+	<section class="relative h-screen w-full flex items-center justify-center overflow-hidden">
+		<!-- 3D Background -->
+		<div class="absolute inset-0 z-0">
+			<ForgeCanvas client:load />
+		</div>
 
-		<Hero />
-    <Stats client:load />
-    <Showcase client:load />
-    <Features />
-    <HowToUse client:load />
-    <Download />
-    <Community />
-	</main>
+		<!-- Hero Content -->
+		<div class="relative z-10 container mx-auto px-6 text-center">
+			<h1 class="text-6xl md:text-8xl font-bold tracking-tighter mb-6 bg-clip-text text-transparent bg-gradient-to-b from-white to-white/40">
+				SHAPE CODE <br /> LIKE METAL.
+			</h1>
+			<p class="text-xl md:text-2xl text-white/60 max-w-2xl mx-auto mb-12">
+				The first autonomous coding agent that orchestrates Gemini, Claude, and GPT to build production software at terminal velocity.
+			</p>
+			
+			<div class="flex flex-col md:flex-row items-center justify-center gap-4">
+				<a href="/docs" class="btn-primary text-lg px-8 py-4 w-full md:w-auto">
+					Install Forge
+				</a>
+				<a href="/arena" class="px-8 py-4 glass rounded-lg font-medium hover:bg-white/5 transition-all w-full md:w-auto">
+					Watch the Arena
+				</a>
+			</div>
+		</div>
+
+		<!-- Floating Terminal -->
+		<div class="absolute bottom-12 left-1/2 -translate-x-1/2 w-full max-w-3xl px-6 z-20">
+			<Terminal client:load />
+		</div>
+
+		<!-- Gradient Overlay -->
+		<div class="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent pointer-events-none"></div>
+	</section>
+
+	<section class="py-24 bg-background relative z-10">
+		<div class="container mx-auto px-6">
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+				<div class="fade-in">
+					<div class="w-12 h-12 bg-accent-primary/20 rounded-lg flex items-center justify-center mb-6">
+						<svg class="w-6 h-6 text-accent-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+					</div>
+					<h3 class="text-xl font-bold mb-4">Multi-Model Orchestration</h3>
+					<p class="text-white/60">Forge doesn't just use one model. It picks the best tool for the job, running tasks in parallel across Gemini, Claude, and GPT.</p>
+				</div>
+				<div class="fade-in">
+					<div class="w-12 h-12 bg-accent-secondary/20 rounded-lg flex items-center justify-center mb-6">
+						<svg class="w-6 h-6 text-accent-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04M12 21.48V22"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21.48V22m0-19.52V2.944a11.955 11.955 0 01-8.618 3.04M12 21.48V22"/></svg>
+					</div>
+					<h3 class="text-xl font-bold mb-4">Bulletproof Safety</h3>
+					<p class="text-white/60">Four levels of safety classification. Real-time pipe-to-shell detection. Your system stays yours.</p>
+				</div>
+				<div class="fade-in">
+					<div class="w-12 h-12 bg-gemini/20 rounded-lg flex items-center justify-center mb-6">
+						<svg class="w-6 h-6 text-gemini" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+					</div>
+					<h3 class="text-xl font-bold mb-4">Terminal Native</h3>
+					<p class="text-white/60">No bloated IDE plugins. Forge lives in your terminal, where you already work. Fast, lightweight, relentless.</p>
+				</div>
+			</div>
+		</div>
+	</section>
 </Layout>

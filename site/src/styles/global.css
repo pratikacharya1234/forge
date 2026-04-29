@@ -1,70 +1,54 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #0a0a0a;
-  --color-surface: #141414;
-  --color-accent-indigo: #6366f1;
-  --color-accent-cyan: #22d3ee;
-  --color-terminal-green: #4ade80;
-  
-  --font-sans: "Inter", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", monospace;
+  --color-background: #050510;
+  --color-surface: #0a0a1a;
+  --color-card: rgba(15, 36, 68, 0.4);
+  --color-accent-primary: #6366f1;
+  --color-accent-secondary: #22d3ee;
+  --color-gemini: #4ade80;
+  --color-claude: #a855f7;
+  --color-gpt: #f97316;
+  --color-danger: #ef4444;
+  --color-code-bg: #0c0f1a;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
 @layer base {
-  html {
-    scroll-behavior: smooth;
-    background-color: var(--color-background);
-    color: white;
-    font-family: var(--font-sans);
-  }
-  
   body {
-    @apply antialiased;
+    @apply bg-background text-white font-sans antialiased;
+    overflow-x: hidden;
+  }
+
+  * {
+    @apply border-white/10;
   }
 }
 
-@font-face {
-  font-family: 'Inter';
-  src: url('/fonts/Inter-VariableFont_slnt,wght.ttf') format('truetype');
-  font-weight: 100 900;
-  font-display: swap;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: 'JetBrains Mono';
-  src: url('/fonts/JetBrainsMono-VariableFont_wght.ttf') format('truetype');
-  font-weight: 100 800;
-  font-display: swap;
-  font-style: normal;
-}
-
-  .terminal-window {
-    @apply bg-[#0c0c0c] border border-white/10 rounded-lg overflow-hidden shadow-2xl;
+@layer components {
+  .glass {
+    @apply bg-card backdrop-blur-md border border-white/15;
   }
 
-  @keyframes pulse-slow {
-    0%, 100% { opacity: 0.2; }
-    50% { opacity: 0.5; }
+  .btn-primary {
+    @apply px-6 py-3 bg-accent-primary hover:bg-accent-primary/90 text-white rounded-lg font-medium transition-all;
   }
 
-  .connection-line {
-    animation: pulse-slow 3s infinite ease-in-out;
+  .winner-glow {
+    box-shadow: 0 0 50px rgba(74, 222, 128, 0.3);
+    animation: pulse-glow 2s infinite;
   }
 
-  .terminal-header {
-  @apply bg-white/5 px-4 py-2 flex items-center gap-2 border-b border-white/5;
+  @keyframes pulse-glow {
+    0% { box-shadow: 0 0 30px rgba(74, 222, 128, 0.2); }
+    50% { box-shadow: 0 0 60px rgba(74, 222, 128, 0.4); }
+    100% { box-shadow: 0 0 30px rgba(74, 222, 128, 0.2); }
+  }
 }
 
-.terminal-dot {
-  @apply w-3 h-3 rounded-full;
-}
-
-.terminal-body {
-  @apply p-4 font-mono text-sm leading-relaxed;
-}
-
+/* Animations */
 .fade-in {
   opacity: 0;
   transform: translateY(20px);
@@ -74,4 +58,17 @@
 .fade-in.visible {
   opacity: 1;
   transform: translateY(0);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-background;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-white/10 rounded-full hover:bg-white/20 transition-colors;
 }
