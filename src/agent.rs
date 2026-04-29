@@ -214,10 +214,13 @@ fn system_prompt(config: &Config) -> String {
         ""
     };
 
+    let tool_count = tools::core_tool_count();
+
     SYSTEM_PROMPT_BASE
         .replace("{model_hint}", &model_hint(config))
         .replace("{project_context}", &load_project_context())
         .replace("{memory_context}", &load_memory_context())
+        .replace("{tool_count}", &tool_count.to_string())
         .replace("{cwd}", &cwd_safe)
         + grounding_line
 }
