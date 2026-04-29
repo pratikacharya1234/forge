@@ -11,16 +11,16 @@
 
 ---
 
-**FORGE** is the open-source, multi-model terminal AI coding agent. 1M token context. Built in Rust. Works with Gemini, Claude, and GPT — routing each task to the best model automatically. Free. No subscriptions. No lock-in.
+**FORGE** is the open-source, multi-model terminal AI coding agent. 1M token context. Built in Rust. Works with Gemini, Claude, and GPT  routing each task to the best model automatically. Free. No subscriptions. No lock-in.
 
 ### What Makes FORGE Different
 
 FORGE is the **only** coding agent that:
 - **Decomposes tasks and dispatches subtasks to different AI models** based on difficulty
-- **Runs parallel subagents** — critical work goes to reasoning models, routine work to fast models
-- **Verifies critical changes with a second model** — cross-provider consensus checking
-- **Auto-researches before coding** — web searches for docs, APIs, and best practices first
-- **Auto-escalates** — starts with the cheapest model, upgrades automatically on failure
+- **Runs parallel subagents** critical work goes to reasoning models, routine work to fast models
+- **Verifies critical changes with a second model** cross-provider consensus checking
+- **Auto-researches before coding**  web searches for docs, APIs, and best practices first
+- **Auto-escalates** starts with the cheapest model, upgrades automatically on failure
 
 ### Comparison
 

@@ -20,6 +20,9 @@ mod token_counter;
 mod tools;
 mod ui;
 
+#[cfg(test)]
+mod test_harness;
+
 #[derive(Parser, Debug)]
 #[clap(
     name    = "forge",
