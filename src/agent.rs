@@ -1032,7 +1032,8 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                 session_tokens = session_tokens.saturating_add(tokens);
                 let window = config::context_window(&current_model);
                 let pct = session_tokens as f32 / window as f32;
-                if session_tokens > 0 && pct >= active_cfg.context_warn {
+                // Only warn above 5% context with real tokens present
+                if session_tokens > 50_000 && pct >= active_cfg.context_warn {
                     ui::print_context_warning(pct);
                 }
                 // Cost tracking
@@ -1041,8 +1042,8 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                 if let Some(warning) = cost_tracker.budget_warning() {
                     println!("  {} {}", "!".yellow(), warning.yellow());
                 }
-                // Auto-compaction at threshold
-                if pct >= active_cfg.context_compact && history.len() > 4 {
+                // Auto-compaction — only fire above 10% context with actual tokens present
+                if session_tokens > 10_000 && pct >= active_cfg.context_compact.max(0.10) && history.len() > 4 {
                     println!(
                         "\n  {} Context at {:.0}% — auto-compacting...",
                         "&".yellow(),
@@ -1272,10 +1273,11 @@ async fn agentic_loop(
                 // Context bar when approaching limit
                 let window = config::context_window(&config.model);
                 let total_pct = total_prompt_tokens as f32 / window as f32;
-                if total_pct >= 0.40 {
+                if total_prompt_tokens > 50_000 && total_pct >= 0.40 {
                     ui::print_context_bar(total_prompt_tokens, window);
                 }
-                if total_prompt_tokens > 0 && total_pct >= config.context_compact {
+                // Only fire above 10% context
+                if total_prompt_tokens > 100_000 && total_pct >= config.context_compact.max(0.10) {
                     println!(
                         "  {} Context at {:.0}% — run {} now to avoid truncation",
                         "[CRITICAL]".red(), total_pct * 100.0, "/compact".yellow()
