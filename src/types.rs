@@ -175,18 +175,19 @@ pub struct ApiError {
 // ── HTTP client ────────────────────────────────────────────────────────────────
 
 #[allow(dead_code)]
+#[allow(dead_code)]
 pub struct GeminiClient {
     http: reqwest::Client,
     config: Config,
 }
 
+#[allow(dead_code)]
 impl GeminiClient {
     pub fn new(config: Config) -> Self {
         Self { http: reqwest::Client::new(), config }
     }
 
     /// Non-streaming — used for /compact and SecuritySweep.
-    #[allow(dead_code)]
     pub async fn generate(
         &self,
         request: GenerateContentRequest,

@@ -49,11 +49,26 @@ impl Default for Config {
 
 /// Context window sizes by model family (tokens).
 pub fn context_window(model: &str) -> u32 {
-    if model.contains("2.5") || model.contains("2.0") {
-        1_000_000
-    } else {
-        1_000_000
+    let m = model.to_lowercase();
+    // Claude models
+    if m.contains("claude") {
+        return 200_000;
     }
+    // OpenAI models
+    if m.contains("gpt-4.1") {
+        return 1_000_000;
+    }
+    if m.starts_with("o1") || m.starts_with("o3") || m.starts_with("o4") {
+        return 200_000;
+    }
+    if m.contains("gpt-4o") || m.contains("gpt-4") {
+        return 128_000;
+    }
+    if m.contains("gpt-3.5") {
+        return 16_385;
+    }
+    // Gemini models (default 1M for 2.0+)
+    1_000_000
 }
 
 // ── ~/.forge/config.toml ─────────────────────────────────────────────────────

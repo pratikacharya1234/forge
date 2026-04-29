@@ -92,6 +92,98 @@ pub fn filter_coding_models(models: &[ModelInfo]) -> Vec<ModelInfo> {
     filtered
 }
 
+/// Fetch Claude models from the Anthropic API.
+/// Returns `(model_id, context_description)` pairs filtered to generation models.
+pub async fn fetch_anthropic_models(api_key: &str) -> Result<Vec<(String, String)>> {
+    #[derive(serde::Deserialize)]
+    struct AnthropicModel {
+        id: String,
+        display_name: Option<String>,
+    }
+    #[derive(serde::Deserialize)]
+    struct AnthropicListResponse {
+        data: Vec<AnthropicModel>,
+    }
+
+    let client = reqwest::Client::new();
+    let resp = client
+        .get("https://api.anthropic.com/v1/models")
+        .header("x-api-key", api_key)
+        .header("anthropic-version", "2023-06-01")
+        .send()
+        .await?;
+
+    let body = resp.text().await?;
+    let parsed: AnthropicListResponse = serde_json::from_str(&body)?;
+
+    let skip = ["claude-2", "claude-instant", "claude-1"];
+    let mut out: Vec<(String, String)> = parsed
+        .data
+        .into_iter()
+        .filter(|m| !skip.iter().any(|s| m.id.contains(s)))
+        .map(|m| {
+            let ctx = if m.id.contains("claude-4") || m.id.contains("claude-3") {
+                "200K ctx".to_string()
+            } else {
+                m.display_name.unwrap_or_default()
+            };
+            (m.id, ctx)
+        })
+        .collect();
+
+    out.sort_by(|a, b| b.0.cmp(&a.0));
+    out.dedup_by(|a, b| a.0 == b.0);
+    Ok(out)
+}
+
+/// Fetch GPT/O-series models from the OpenAI API.
+/// Returns `(model_id, context_description)` pairs filtered to relevant chat models.
+pub async fn fetch_openai_models(api_key: &str) -> Result<Vec<(String, String)>> {
+    #[derive(serde::Deserialize)]
+    struct OpenAIModel {
+        id: String,
+    }
+    #[derive(serde::Deserialize)]
+    struct OpenAIListResponse {
+        data: Vec<OpenAIModel>,
+    }
+
+    let client = reqwest::Client::new();
+    let resp = client
+        .get("https://api.openai.com/v1/models")
+        .header("Authorization", format!("Bearer {}", api_key))
+        .send()
+        .await?;
+
+    let body = resp.text().await?;
+    let parsed: OpenAIListResponse = serde_json::from_str(&body)?;
+
+    let relevant = ["gpt-4", "gpt-4o", "gpt-4.1", "o1", "o3", "o4"];
+    let skip = ["instruct", "vision", "realtime", "audio", "search", "mini-2024", "preview-2024", "0125", "0613", "1106"];
+    let mut out: Vec<(String, String)> = parsed
+        .data
+        .into_iter()
+        .filter(|m| {
+            relevant.iter().any(|p| m.id.starts_with(p))
+                && !skip.iter().any(|s| m.id.contains(s))
+        })
+        .map(|m| {
+            let ctx = if m.id.contains("gpt-4.1") {
+                "1M ctx".to_string()
+            } else if m.id.contains("o3") || m.id.contains("o4") || m.id.contains("o1") {
+                "200K ctx".to_string()
+            } else {
+                "128K ctx".to_string()
+            };
+            (m.id, ctx)
+        })
+        .collect();
+
+    out.sort_by(|a, b| b.0.cmp(&a.0));
+    out.dedup_by(|a, b| a.0 == b.0);
+    Ok(out)
+}
+
 /// Get the latest available model matching a preference.
 pub fn pick_best_model(models: &[ModelInfo], preferred: &str) -> String {
     let find = |name: &str| -> Option<String> {

@@ -709,7 +709,9 @@ async fn run_subtask(
 ) -> Result<String> {
     let mut cfg = Config::default();
     cfg.model = model.to_string();
-    cfg.api_key = std::env::var("GEMINI_API_KEY").unwrap_or_default();
+    cfg.api_key = std::env::var("FORGE_API_KEY")
+        .or_else(|_| std::env::var("GEMINI_API_KEY"))
+        .unwrap_or_default();
 
     // Load keys from environment
     if let Ok(key) = std::env::var("ANTHROPIC_API_KEY") {

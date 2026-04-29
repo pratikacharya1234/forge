@@ -820,6 +820,8 @@ struct OpenAIMessage {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 struct OpenAIToolCall {
+    #[serde(default)]
+    index: usize,
     id: String,
     #[serde(rename = "type")]
     call_type: String,
@@ -980,9 +982,10 @@ impl OpenAIBackend {
                         } else { None }
                     }).collect::<Vec<_>>().join("\n");
 
-                    let tool_calls: Vec<OpenAIToolCall> = content.parts.iter().filter_map(|p| {
+                    let tool_calls: Vec<OpenAIToolCall> = content.parts.iter().enumerate().filter_map(|(i, p)| {
                         if let Part::FunctionCall { function_call } = p {
                             Some(OpenAIToolCall {
+                                index: i,
                                 id: format!("call_{}", uuid::Uuid::new_v4()),
                                 call_type: "function".into(),
                                 function: OpenAIFunction {
@@ -1167,8 +1170,8 @@ impl OpenAIBackend {
                             }
                             if let Some(ref tcs) = choice.delta.tool_calls {
                                 for tc in tcs {
-                                    let idx = tc.id.len().min(1); // Use index from tool call
-                                    let entry = tool_calls.entry(idx).or_insert_with(|| OpenAIToolCall {
+                                    let entry = tool_calls.entry(tc.index).or_insert_with(|| OpenAIToolCall {
+                                        index: tc.index,
                                         id: tc.id.clone(),
                                         call_type: "function".into(),
                                         function: OpenAIFunction { name: String::new(), arguments: String::new() },

@@ -85,48 +85,172 @@ pub struct ModelPricing {
 }
 
 pub fn pricing_for_model(model: &str) -> ModelPricing {
-    if model.contains("2.5-pro") {
-        ModelPricing {
+    let m = model.to_lowercase();
+
+    // ── Claude (Anthropic) ────────────────────────────────────────────────────
+    if m.contains("claude-4-opus") || m.contains("claude-opus-4") {
+        return ModelPricing {
+            input_price_per_mtok: 15.0,
+            output_price_per_mtok: 75.0,
+            thinking_price_per_mtok: 15.0,
+            context_window: 200_000,
+        };
+    }
+    if m.contains("claude-4-sonnet") || m.contains("claude-sonnet-4") {
+        return ModelPricing {
+            input_price_per_mtok: 3.0,
+            output_price_per_mtok: 15.0,
+            thinking_price_per_mtok: 3.0,
+            context_window: 200_000,
+        };
+    }
+    if m.contains("claude-3.5-sonnet") || m.contains("claude-3-5-sonnet") {
+        return ModelPricing {
+            input_price_per_mtok: 3.0,
+            output_price_per_mtok: 15.0,
+            thinking_price_per_mtok: 0.0,
+            context_window: 200_000,
+        };
+    }
+    if m.contains("claude-3.5-haiku") || m.contains("claude-3-5-haiku") {
+        return ModelPricing {
+            input_price_per_mtok: 0.80,
+            output_price_per_mtok: 4.0,
+            thinking_price_per_mtok: 0.0,
+            context_window: 200_000,
+        };
+    }
+    if m.contains("claude") {
+        return ModelPricing {
+            input_price_per_mtok: 3.0,
+            output_price_per_mtok: 15.0,
+            thinking_price_per_mtok: 3.0,
+            context_window: 200_000,
+        };
+    }
+
+    // ── OpenAI ────────────────────────────────────────────────────────────────
+    if m.contains("gpt-4.1-mini") {
+        return ModelPricing {
+            input_price_per_mtok: 0.40,
+            output_price_per_mtok: 1.60,
+            thinking_price_per_mtok: 0.0,
+            context_window: 1_000_000,
+        };
+    }
+    if m.contains("gpt-4.1") {
+        return ModelPricing {
+            input_price_per_mtok: 2.0,
+            output_price_per_mtok: 8.0,
+            thinking_price_per_mtok: 0.0,
+            context_window: 1_000_000,
+        };
+    }
+    if m.starts_with("o4-mini") {
+        return ModelPricing {
+            input_price_per_mtok: 1.10,
+            output_price_per_mtok: 4.40,
+            thinking_price_per_mtok: 1.10,
+            context_window: 200_000,
+        };
+    }
+    if m.starts_with("o3-mini") {
+        return ModelPricing {
+            input_price_per_mtok: 1.10,
+            output_price_per_mtok: 4.40,
+            thinking_price_per_mtok: 1.10,
+            context_window: 200_000,
+        };
+    }
+    if m.starts_with("o3") {
+        return ModelPricing {
+            input_price_per_mtok: 10.0,
+            output_price_per_mtok: 40.0,
+            thinking_price_per_mtok: 10.0,
+            context_window: 200_000,
+        };
+    }
+    if m.starts_with("o4") {
+        return ModelPricing {
+            input_price_per_mtok: 10.0,
+            output_price_per_mtok: 40.0,
+            thinking_price_per_mtok: 10.0,
+            context_window: 200_000,
+        };
+    }
+    if m.contains("gpt-4o-mini") {
+        return ModelPricing {
+            input_price_per_mtok: 0.15,
+            output_price_per_mtok: 0.60,
+            thinking_price_per_mtok: 0.0,
+            context_window: 128_000,
+        };
+    }
+    if m.contains("gpt-4o") {
+        return ModelPricing {
+            input_price_per_mtok: 2.50,
+            output_price_per_mtok: 10.0,
+            thinking_price_per_mtok: 0.0,
+            context_window: 128_000,
+        };
+    }
+    if m.contains("gpt-4") {
+        return ModelPricing {
+            input_price_per_mtok: 30.0,
+            output_price_per_mtok: 60.0,
+            thinking_price_per_mtok: 0.0,
+            context_window: 128_000,
+        };
+    }
+
+    // ── Gemini ────────────────────────────────────────────────────────────────
+    if m.contains("2.5-pro") {
+        return ModelPricing {
             input_price_per_mtok: 1.25,
             output_price_per_mtok: 10.0,
             thinking_price_per_mtok: 1.25,
             context_window: 1_000_000,
-        }
-    } else if model.contains("2.5-flash-lite") {
-        ModelPricing {
+        };
+    }
+    if m.contains("2.5-flash-lite") {
+        return ModelPricing {
             input_price_per_mtok: 0.10,
             output_price_per_mtok: 0.40,
             thinking_price_per_mtok: 0.0,
             context_window: 1_000_000,
-        }
-    } else if model.contains("2.5-flash") || model.contains("2.5") {
-        ModelPricing {
+        };
+    }
+    if m.contains("2.5-flash") || m.contains("2.5") {
+        return ModelPricing {
             input_price_per_mtok: 0.15,
             output_price_per_mtok: 0.60,
             thinking_price_per_mtok: 0.15,
             context_window: 1_000_000,
-        }
-    } else if model.contains("2.0-flash-lite") {
-        ModelPricing {
+        };
+    }
+    if m.contains("2.0-flash-lite") {
+        return ModelPricing {
             input_price_per_mtok: 0.075,
             output_price_per_mtok: 0.30,
             thinking_price_per_mtok: 0.0,
             context_window: 1_000_000,
-        }
-    } else if model.contains("2.0-flash") || model.contains("2.0") {
-        ModelPricing {
+        };
+    }
+    if m.contains("2.0-flash") || m.contains("2.0") {
+        return ModelPricing {
             input_price_per_mtok: 0.10,
             output_price_per_mtok: 0.40,
             thinking_price_per_mtok: 0.0,
             context_window: 1_000_000,
-        }
-    } else {
-        ModelPricing {
-            input_price_per_mtok: 0.15,
-            output_price_per_mtok: 0.60,
-            thinking_price_per_mtok: 0.15,
-            context_window: 1_000_000,
-        }
+        };
+    }
+
+    // Default (Gemini-family fallback)
+    ModelPricing {
+        input_price_per_mtok: 0.15,
+        output_price_per_mtok: 0.60,
+        thinking_price_per_mtok: 0.15,
+        context_window: 1_000_000,
     }
 }
 

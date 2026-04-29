@@ -1,6 +1,7 @@
 use anyhow::Result;
 use colored::Colorize;
 
+use crate::backend::BackendClient;
 use crate::config::Config;
 use crate::types::*;
 
@@ -9,8 +10,8 @@ use crate::types::*;
 /// Steps:
 /// 1. Run `cargo audit` if Cargo.lock is present.
 /// 2. Run `npm audit` if package-lock.json is present.
-/// 3. Ask Gemini (with Google Search grounding) to review the findings and
-///    search for known CVEs relevant to the detected dependencies.
+/// 3. Use the active AI backend (with Google Search grounding) to review
+///    findings and search for known CVEs relevant to the detected dependencies.
 pub async fn sweep(config: &Config) -> Result<()> {
     println!();
     println!(
@@ -102,9 +103,9 @@ pub async fn sweep(config: &Config) -> Result<()> {
         println!("{} No obvious hardcoded secrets found", "[OK]".green());
     }
 
-    // ── Gemini grounded analysis ───────────────────────────────────────────────
+    // ── AI grounded analysis ──────────────────────────────────────────────────
     println!();
-    println!("{} Asking Gemini to search for CVEs and security issues...", "[BUSY]".bright_yellow());
+    println!("{} Searching for CVEs and security issues...", "[BUSY]".bright_yellow());
 
     let prompt = if findings.is_empty() {
         "Perform a security audit of the current project. \
@@ -150,7 +151,13 @@ pub async fn sweep(config: &Config) -> Result<()> {
         }),
     };
 
-    let client = GeminiClient::new(config.clone());
+    let client = match BackendClient::new(config) {
+        Ok(c) => c,
+        Err(e) => {
+            eprintln!("\n{} Could not initialize backend: {}", "[ERR]".red(), e);
+            return Ok(());
+        }
+    };
 
     println!();
     print!("{} ", "◆ Security Report".bright_red().bold());
@@ -180,7 +187,7 @@ pub async fn sweep(config: &Config) -> Result<()> {
             }
         }
         Err(e) => {
-            eprintln!("\n{} Gemini analysis failed: {}", "[ERR]".red(), e);
+            eprintln!("\n{} AI analysis failed: {}", "[ERR]".red(), e);
             eprintln!("  Tip: run with --grounding or enable Google Search for CVE lookups.");
         }
     }

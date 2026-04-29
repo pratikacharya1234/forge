@@ -715,6 +715,10 @@ async fn tool_git_snapshot(args: &Value) -> ToolResult {
 
 // ── Gemini function declarations ───────────────────────────────────────────────
 
+pub fn core_tool_count() -> usize {
+    get_tool_declarations().len()
+}
+
 pub fn get_tool_declarations() -> Vec<FunctionDeclaration> {
     vec![
         FunctionDeclaration {

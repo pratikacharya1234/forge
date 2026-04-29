@@ -91,7 +91,7 @@ You are running on FORGE — the open-source, multi-model terminal coding agent.
 - Test-fix loop: /test-fix runs tests, detects failures, fixes code, repeats until pass.
 - Explain-before-execute: /explain shows planned actions before running.
 - Persistent memory: /memorize saves facts and preferences across sessions.
-- 16 built-in tools + 33 integration tools (GitHub, Discord, Gmail, Drive).
+- {tool_count} built-in tools + integration tools (GitHub, Discord, Gmail, Drive).
 - 4-level safety system with per-project policy overrides.
 - MCP support for external tool servers.
 
@@ -311,11 +311,15 @@ pub async fn run_once(config: &Config, prompt: &str, screenshot: Option<&str>) -
 }
 
 pub async fn run_interactive(config: &Config) -> Result<()> {
-    ui::print_banner(config.grounding, config.thinking, config.auto_apply);
-
-    // Initialize MCP servers and integrations
+    // Initialize registries first so integration count is known before the banner
     let mcp = Arc::new(McpRegistry::startup(&config.mcp_servers).await);
     let integrations = Arc::new(IntegrationRegistry::from_config(&config.integrations));
+
+    let banner_tool_count = tools::core_tool_count();
+    let banner_int_count  = integrations.tool_count();
+    let banner_ctx        = config::context_window(&config.model);
+    ui::print_banner(config.grounding, config.thinking, config.auto_apply, banner_tool_count, banner_int_count, banner_ctx);
+
     if mcp.server_count() > 0 { mcp.print_status(); println!(); }
     if integrations.service_count() > 0 { integrations.print_status(); println!(); }
 
@@ -382,7 +386,38 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                     println!("{}", "Conversation cleared.".dimmed());
                 }
 
-                "/help" | "/h" => ui::print_help(),
+                "/help" | "/h" => {
+                    let live_gemini = models::fetch_available_models(&config.api_key)
+                        .await
+                        .ok()
+                        .map(|ms| {
+                            models::filter_coding_models(&ms)
+                                .into_iter()
+                                .map(|m| {
+                                    let name = m.name.trim_start_matches("models/").to_string();
+                                    let desc = m.input_token_limit
+                                        .map(|t| format!("{}K ctx", t / 1_000))
+                                        .unwrap_or_else(|| m.display_name.unwrap_or_default());
+                                    (name, desc)
+                                })
+                                .collect::<Vec<_>>()
+                        });
+                    let live_claude = if let Some(ref key) = config.anthropic_api_key {
+                        models::fetch_anthropic_models(key).await.ok()
+                    } else {
+                        None
+                    };
+                    let live_openai = if let Some(ref key) = config.openai_api_key {
+                        models::fetch_openai_models(key).await.ok()
+                    } else {
+                        None
+                    };
+                    ui::print_help(
+                        live_gemini.as_deref(),
+                        live_claude.as_deref(),
+                        live_openai.as_deref(),
+                    );
+                }
 
                 "/history" => {
                     let n: usize = parts.get(1)
@@ -405,30 +440,75 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                         Some("list") | Some("ls") => {
                             println!();
                             println!("  {}:", "Gemini".cyan());
-                            let gemini_models = [
-                                ("gemini-2.5-pro",        "deep reasoning, 1M context, thinking"),
-                                ("gemini-2.5-flash",      "fastest recommended, thinking"),
-                                ("gemini-2.5-flash-lite",  "cheapest 2.5, $0.10/M input"),
-                                ("gemini-2.0-flash",      "previous gen, no thinking"),
-                                ("gemini-2.0-flash-lite", "lightest, lowest cost"),
-                            ];
-                            for (m, d) in gemini_models {
-                                let marker = if m == current_model { "->".green() } else { " ".normal() };
-                                println!("  {} {:28} {}", marker, m.cyan(), d.dimmed());
+                            match models::fetch_available_models(&config.api_key).await {
+                                Ok(all) => {
+                                    for m in models::filter_coding_models(&all) {
+                                        let name = m.name.trim_start_matches("models/");
+                                        let marker = if name.contains(&*current_model) || current_model.contains(name) {
+                                            "->".green()
+                                        } else {
+                                            "  ".normal()
+                                        };
+                                        let desc = m.input_token_limit
+                                            .map(|t| format!("{}K ctx", t / 1_000))
+                                            .unwrap_or_default();
+                                        println!("  {} {:<38} {}", marker, name.cyan(), desc.dimmed());
+                                    }
+                                }
+                                Err(_) => {
+                                    // API unreachable — show known-good set
+                                    for (m, d) in [
+                                        ("gemini-2.5-pro",         "1M ctx  deep reasoning"),
+                                        ("gemini-2.5-flash",       "1M ctx  fastest, default"),
+                                        ("gemini-2.5-flash-lite",  "1M ctx  cheapest 2.5"),
+                                        ("gemini-2.0-flash",       "1M ctx  previous gen"),
+                                    ] {
+                                        let marker = if m == current_model { "->".green() } else { "  ".normal() };
+                                        println!("  {} {:<38} {}", marker, m.cyan(), d.dimmed());
+                                    }
+                                }
                             }
                             println!();
                             println!("  {}:", "Claude".cyan());
-                            let claude = ["claude-4-opus", "claude-4-sonnet", "claude-3.5-sonnet"];
-                            for m in claude {
-                                let marker = if m == current_model { "->".green() } else { " ".normal() };
-                                println!("  {} {}", marker, m.cyan());
+                            let claude_models = if let Some(ref key) = config.anthropic_api_key {
+                                models::fetch_anthropic_models(key).await.ok()
+                            } else {
+                                None
+                            };
+                            if let Some(ref list) = claude_models {
+                                for (m, d) in list {
+                                    let marker = if m == &current_model { "->".green() } else { "  ".normal() };
+                                    println!("  {} {:<38} {}", marker, m.cyan(), d.dimmed());
+                                }
+                            } else {
+                                for m in ["claude-4-opus", "claude-4-sonnet", "claude-3.5-sonnet"] {
+                                    let marker = if m == current_model { "->".green() } else { "  ".normal() };
+                                    println!("  {} {}", marker, m.cyan());
+                                }
+                                if config.anthropic_api_key.is_none() {
+                                    println!("     {}", "(set ANTHROPIC_API_KEY for live list)".bright_black());
+                                }
                             }
                             println!();
                             println!("  {}:", "OpenAI".cyan());
-                            let openai = ["gpt-4.1", "gpt-4o", "o3", "o4-mini"];
-                            for m in openai {
-                                let marker = if m == current_model { "->".green() } else { " ".normal() };
-                                println!("  {} {}", marker, m.cyan());
+                            let openai_models = if let Some(ref key) = config.openai_api_key {
+                                models::fetch_openai_models(key).await.ok()
+                            } else {
+                                None
+                            };
+                            if let Some(ref list) = openai_models {
+                                for (m, d) in list {
+                                    let marker = if m == &current_model { "->".green() } else { "  ".normal() };
+                                    println!("  {} {:<38} {}", marker, m.cyan(), d.dimmed());
+                                }
+                            } else {
+                                for m in ["gpt-4.1", "gpt-4o", "o3", "o4-mini"] {
+                                    let marker = if m == current_model { "->".green() } else { "  ".normal() };
+                                    println!("  {} {}", marker, m.cyan());
+                                }
+                                if config.openai_api_key.is_none() {
+                                    println!("     {}", "(set OPENAI_API_KEY for live list)".bright_black());
+                                }
                             }
                             println!();
                             println!("  {} /model auto — auto-select best model for each task", "Tip:".dimmed());

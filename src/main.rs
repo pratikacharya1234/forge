@@ -83,15 +83,33 @@ async fn main() -> Result<()> {
 
     let file_cfg = config::Config::file_defaults();
 
+    // Allow launch without Gemini key if Claude/OpenAI keys are available
+    let has_alt_key = args.anthropic_api_key.is_some()
+        || args.openai_api_key.is_some()
+        || file_cfg.anthropic_api_key.is_some()
+        || file_cfg.openai_api_key.is_some()
+        || std::env::var("ANTHROPIC_API_KEY").ok().map_or(false, |k| !k.is_empty())
+        || std::env::var("OPENAI_API_KEY").ok().map_or(false, |k| !k.is_empty());
+
     let api_key = args.api_key
         .or(file_cfg.api_key)
         .or_else(|| std::env::var("FORGE_API_KEY").ok())
         .or_else(|| std::env::var("GEMINI_API_KEY").ok())
-        .ok_or_else(|| anyhow::anyhow!(
-            "API key not found.\n\
-             Set FORGE_API_KEY or use --api-key.\n\
-             Free key: https://aistudio.google.com/apikey"
-        ))?;
+        .unwrap_or_else(|| {
+            if has_alt_key {
+                String::new() // OK — user will switch model before using Gemini
+            } else {
+                String::new() // Will fail on first Gemini API call
+            }
+        });
+
+    if api_key.is_empty() && !has_alt_key {
+        anyhow::bail!(
+            "No API key found.\n\
+             Set FORGE_API_KEY, ANTHROPIC_API_KEY, or OPENAI_API_KEY.\n\
+             Free Gemini key: https://aistudio.google.com/apikey"
+        );
+    }
 
     let model = file_cfg.model.unwrap_or(args.model);
 
