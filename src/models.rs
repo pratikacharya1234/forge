@@ -237,3 +237,31 @@ pub fn resolve_model_name(fetched: &[ModelInfo], requested: &str) -> String {
 
     requested.to_string()
 }
+
+/// Auto-detect the best available Gemini model from the API response.
+/// Prefers gemini-2.5-flash variants, falls back to latest available.
+pub fn resolve_best_model(fetched: &[ModelInfo]) -> String {
+    let coding = filter_coding_models(fetched);
+
+    // Priority order for default model selection
+    let preferences = [
+        "gemini-2.5-flash",
+        "gemini-2.5-pro",
+        "gemini-2.0-flash",
+        "gemini-2.5-flash-lite",
+    ];
+
+    for pref in &preferences {
+        if let Some(m) = coding.iter().find(|m| m.name.contains(pref)) {
+            return m.name.clone();
+        }
+    }
+
+    // No preferred model found — use the first coding model available
+    if let Some(m) = coding.first() {
+        return m.name.clone();
+    }
+
+    // Nothing found at all — return the API default
+    "gemini-2.5-flash".to_string()
+}

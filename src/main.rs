@@ -35,9 +35,9 @@ struct Args {
     #[clap(short = 'k', long, env = "FORGE_API_KEY")]
     api_key: Option<String>,
 
-    /// Gemini model to use.
-    #[clap(short, long, default_value = "gemini-2.5-flash")]
-    model: String,
+    /// Model to use (auto-detected if not specified).
+    #[clap(short, long)]
+    model: Option<String>,
 
     /// Enable Google Search grounding.
     #[clap(short, long)]
@@ -114,7 +114,21 @@ async fn main() -> Result<()> {
         );
     }
 
-    let model = file_cfg.model.unwrap_or(args.model);
+    // Resolve model: CLI arg → config file → auto-detect from API → hardcoded fallback
+    let model = if let Some(m) = args.model.clone().or(file_cfg.model.clone()) {
+        m
+    } else if !api_key.is_empty() {
+        match models::fetch_available_models(&api_key).await {
+            Ok(all) => {
+                let best = models::resolve_best_model(&all);
+                eprintln!("  Auto-detected best model: {}", best);
+                best
+            }
+            Err(_) => "gemini-2.5-flash".to_string()
+        }
+    } else {
+        "gemini-2.5-flash".to_string()
+    };
 
     let thinking = args.think || file_cfg.thinking;
     let budget   = if args.think { args.think_budget } else { file_cfg.thinking_budget };
