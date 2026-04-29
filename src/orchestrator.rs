@@ -833,6 +833,7 @@ async fn run_subtask(
                 function_call: FunctionCall {
                     name: fc.name.clone(),
                     args: fc.args.clone(),
+                    thought_signature: None,
                 },
             });
         }

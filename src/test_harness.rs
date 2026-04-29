@@ -212,6 +212,7 @@ mod types_tests {
         let fc = FunctionCall {
             name: "read_file".into(),
             args: serde_json::json!({"path": "src/main.rs"}),
+            thought_signature: None,
         };
         assert_eq!(fc.name, "read_file");
         assert_eq!(fc.args["path"], "src/main.rs");

@@ -551,6 +551,7 @@ impl AnthropicBackend {
                         function_call: FunctionCall {
                             name: block.name.clone().unwrap_or_default(),
                             args: block.input.clone().unwrap_or(serde_json::json!({})),
+                            thought_signature: None,
                         },
                     });
                 }
@@ -774,6 +775,7 @@ impl AnthropicBackend {
                     let fc = FunctionCall {
                         name: block.name.clone().unwrap_or_default(),
                         args: block.input.clone().unwrap_or(serde_json::json!({})),
+                        thought_signature: None,
                     };
                     parts.push(Part::FunctionCall { function_call: fc });
                 }
@@ -1064,6 +1066,7 @@ impl OpenAIBackend {
                         function_call: FunctionCall {
                             name: tc.function.name.clone(),
                             args,
+                            thought_signature: None,
                         },
                     });
                 }
@@ -1195,7 +1198,7 @@ impl OpenAIBackend {
             let args: serde_json::Value = serde_json::from_str(&tc.function.arguments)
                 .unwrap_or(serde_json::json!({}));
             parts.push(Part::FunctionCall {
-                function_call: FunctionCall { name: tc.function.name, args },
+                function_call: FunctionCall { name: tc.function.name, args, thought_signature: None },
             });
         }
 

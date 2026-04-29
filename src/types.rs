@@ -81,6 +81,10 @@ pub struct InlineData {
 pub struct FunctionCall {
     pub name: String,
     pub args: serde_json::Value,
+    /// Gemini 3 requires thought_signature on function call parts for tool use.
+    /// Captured from model response and echoed back in conversation history.
+    #[serde(default, rename = "thought_signature", skip_serializing_if = "Option::is_none")]
+    pub thought_signature: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

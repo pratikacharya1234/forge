@@ -101,6 +101,7 @@ fn deserialize_history(contents: &[SerializedContent]) -> Vec<Content> {
                             function_call: crate::types::FunctionCall {
                                 name: name.clone(),
                                 args: args_val,
+                                thought_signature: None,
                             },
                         }
                     }
