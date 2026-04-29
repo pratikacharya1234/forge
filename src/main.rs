@@ -21,6 +21,7 @@ mod token_counter;
 mod tools;
 mod ui;
 mod packer;
+mod ci_runner;
 
 #[cfg(test)]
 mod test_harness;
@@ -64,6 +65,11 @@ struct Args {
     /// Custom API base URL for proxying (e.g., LiteLLM, OpenRouter).
     #[clap(long)]
     api_base: Option<String>,
+    #[clap(long)]
+    ci: bool,
+
+    #[clap(long)]
+    pipeline: Option<String>,
 
     /// Max tool-call iterations per turn before pausing (0 = unlimited).
     #[clap(long, default_value = "50")]
@@ -205,6 +211,21 @@ async fn main() -> Result<()> {
         explain_before_execute: args.explain || file_cfg.explain_before_execute,
         api_base: args.api_base,
     };
+
+    // CI headless mode — run prompt, output JSON, exit
+    if args.ci {
+        let prompt = args.prompt.as_deref().unwrap_or("Fix any issues in this project");
+        let result = ci_runner::run_ci(&config, prompt).await?;
+        println!("{}", serde_json::to_string_pretty(&result)?);
+        if !result.success { std::process::exit(1); }
+        return Ok(());
+    }
+
+    // Pipeline mode — run a named pipeline and exit
+    if let Some(ref name) = args.pipeline {
+        ci_runner::run_pipeline(&config, name).await?;
+        return Ok(());
+    }
 
     if let Some(prompt) = args.prompt {
         agent::run_once(&config, &prompt, args.screenshot.as_deref()).await?;

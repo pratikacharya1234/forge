@@ -318,6 +318,47 @@ pub async fn run_once(config: &Config, prompt: &str, screenshot: Option<&str>) -
     agentic_loop(&client, &mut history, config, false, Some(mcp), Some(integrations), &mut cost_tracker).await.map(|_| ())
 }
 
+pub async fn run_ci_agent(client: &BackendClient, config: &Config, prompt: &str) -> Result<crate::ci_runner::CiResult> {
+    let mcp = std::sync::Arc::new(McpRegistry::startup(&config.mcp_servers).await);
+    let integrations = std::sync::Arc::new(IntegrationRegistry::from_config(&config.integrations));
+    let mut cost_tracker = CostTracker::new(&config.model, config.daily_budget_usd);
+    let parts = vec![Part::text(prompt)];
+    let mut history = vec![Content { role: "user".to_string(), parts }];
+
+    let total_tokens = agentic_loop(&client, &mut history, config, false, Some(mcp), Some(integrations), &mut cost_tracker).await?;
+
+    // Detect changed/created files from the last git diff
+    let mut files_changed: Vec<String> = Vec::new();
+    let mut files_created: Vec<String> = Vec::new();
+
+    if let Ok(output) = std::process::Command::new("git")
+        .args(["diff", "--name-only"])
+        .output()
+    {
+        for line in String::from_utf8_lossy(&output.stdout).lines() {
+            if !line.is_empty() { files_changed.push(line.to_string()); }
+        }
+    }
+
+    if let Ok(output) = std::process::Command::new("git")
+        .args(["ls-files", "--others", "--exclude-standard"])
+        .output()
+    {
+        for line in String::from_utf8_lossy(&output.stdout).lines() {
+            if !line.is_empty() { files_created.push(line.to_string()); }
+        }
+    }
+
+    Ok(crate::ci_runner::CiResult {
+        success: true,
+        message: format!("Task completed: {}", prompt),
+        files_changed,
+        files_created,
+        total_tokens: total_tokens as u64,
+        turns: cost_tracker.turn_count,
+    })
+}
+
 pub async fn run_interactive(config: &Config) -> Result<()> {
     // Initialize registries first so integration count is known before the banner
     let mcp = Arc::new(McpRegistry::startup(&config.mcp_servers).await);
