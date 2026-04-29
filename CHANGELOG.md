@@ -6,7 +6,7 @@ All notable changes to FORGE are documented in this file.
 
 ### First Public Release
 
-FORGE v1.0.0 — the open-source, multi-model terminal coding agent. 1M token context. Free. Previously developed as GeminiX, rebranded to FORGE to reflect universal multi-model support and independence from any single AI provider.
+FORGE v0.0.1 — the open-source, multi-model terminal coding agent. 1M token context. Free. Previously developed as GeminiX, rebranded to FORGE to reflect universal multi-model support and independence from any single AI provider.
 
 **Multi-Model Support**
 - Gemini 2.5 Pro/Flash/Lite, 2.0 Flash

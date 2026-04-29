@@ -355,6 +355,8 @@ pub fn print_help(
         ("/memorize <fact>",               "save fact to persistent memory"),
         ("/forget <keyword>",              "remove matching memory entries"),
         ("/memory",                        "view all memorized facts"),
+        ("/learnings",                     "view auto-learned error patterns"),
+        ("/dna",                           "show auto-detected project conventions"),
         ("",                               ""),
         ("/load [path]",                   "load project files into context"),
         ("/learn <git-url>",               "clone and load any OSS repo"),

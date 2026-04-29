@@ -16,11 +16,13 @@
 ### What Makes FORGE Different
 
 FORGE is the **only** coding agent that:
-- **Decomposes tasks and dispatches subtasks to different AI models** based on difficulty
-- **Runs parallel subagents** critical work goes to reasoning models, routine work to fast models
-- **Verifies critical changes with a second model** cross-provider consensus checking
-- **Auto-researches before coding**  web searches for docs, APIs, and best practices first
-- **Auto-escalates** starts with the cheapest model, upgrades automatically on failure
+- **Gets smarter every session** — ALICE learns from errors and auto-injects lessons
+- **Auto-detects project conventions** — language, indentation, build system, linter config
+- **Decomposes tasks across AI models** — routes each subtask to the best provider
+- **Runs parallel subagents** — critical work to reasoning models, routine to fast models
+- **Verifies with a second model** — cross-provider consensus on critical changes
+- **Auto-researches before coding** — web searches for docs, APIs, best practices
+- **Auto-escalates on failure** — starts cheap, upgrades automatically
 
 ### Comparison
 
@@ -34,6 +36,8 @@ FORGE is the **only** coding agent that:
 | **Consensus verification** | Cross-provider | No | No | No |
 | **Auto-escalation** | Yes | No | No | No |
 | **Pre-execution research** | Yes | No | No | No |
+| **Auto-learning (ALICE)** | **Yes** | No | No | No |
+| **Project DNA detection** | **Yes** | No | No | No |
 | **Interface** | Terminal | Terminal | VS Code | VS Code |
 | **MCP support** | Yes | Yes | Yes | No |
 | **Native integrations** | GitHub, Discord, Gmail, Drive | GitHub | None | GitHub |
