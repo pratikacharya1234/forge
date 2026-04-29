@@ -1,7 +1,7 @@
 # FORGE
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.0.0-blue.svg" alt="Version 1.0.0">
+  <img src="https://img.shields.io/badge/version-0.9.0-blue.svg" alt="Version 0.9.0">
   <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License">
   <img src="https://img.shields.io/badge/rust-1.75%2B-orange.svg" alt="Rust 1.75+">
   <img src="https://img.shields.io/badge/context-1M%20tokens-green.svg" alt="1M Token Context">

@@ -14,7 +14,7 @@ pub fn print_banner(grounding: bool, thinking: bool, auto_apply: bool) {
         width = width - 4
     );
     println!(
-        "  {}  FORGE v1.0.0   {}{}",
+        "  {}  FORGE v0.9.0   {}{}",
         "||".bright_blue(),
         " ".repeat(width - 24),
         "||".bright_blue()

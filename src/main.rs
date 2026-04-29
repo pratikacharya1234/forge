@@ -24,7 +24,7 @@ mod ui;
 #[clap(
     name    = "forge",
     about   = "FORGE — Multi-model terminal AI coding agent",
-    version = "1.0.0",
+    version = "0.9.0",
     long_about = None
 )]
 struct Args {

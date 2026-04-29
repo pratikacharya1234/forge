@@ -1,6 +1,6 @@
 [package]
 name = "forge"
-version = "1.0.0"
+version = "0.9.0"
 edition = "2021"
 description = "Multi-model terminal AI coding agent — forge code with any model"
 authors = ["pratikacharya1234"]
