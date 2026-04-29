@@ -20,6 +20,7 @@ mod snapshot;
 mod token_counter;
 mod tools;
 mod ui;
+mod packer;
 
 #[cfg(test)]
 mod test_harness;
@@ -56,6 +57,10 @@ struct Args {
     #[clap(long)]
     auto_apply: bool,
 
+    /// Pack project context into a portable file for sharing with any AI.
+    #[clap(long)]
+    pack: Option<String>,
+
     /// Max tool-call iterations per turn before pausing (0 = unlimited).
     #[clap(long, default_value = "50")]
     max_iter: u32,
@@ -84,6 +89,13 @@ struct Args {
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Args::parse();
+
+    // Handle non-interactive modes
+    if let Some(ref output) = args.pack {
+        let msg = packer::pack_project(Some(output))?;
+        println!("  {} {}", "📦", msg);
+        return Ok(());
+    }
 
     let file_cfg = config::Config::file_defaults();
 
