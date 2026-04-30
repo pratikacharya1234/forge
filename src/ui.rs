@@ -161,11 +161,21 @@ pub fn print_thinking() {
     );
 }
 
+pub fn print_thinking_with_model(model: &str) {
+    let short_model = model.trim_start_matches("models/").split('-').take(3).collect::<Vec<_>>().join("-");
+    println!();
+    println!(
+        "  {} [{}] {}",
+        "◆ REASONING".bright_yellow().bold(),
+        short_model.bright_blue(),
+        "···".dimmed()
+    );
+}
+
 // ── Tool output ───────────────────────────────────────────────────────────────
 
 pub fn print_tool_call(tool_name: &str, args_display: &str) {
     let display = if args_display.len() > 80 {
-        // UTF-8 safe truncation — find a char boundary ≤ 77 bytes
         let end = if args_display.is_char_boundary(77) { 77 } else { args_display.floor_char_boundary(77) };
         format!("{}…", &args_display[..end])
     } else {
@@ -174,6 +184,28 @@ pub fn print_tool_call(tool_name: &str, args_display: &str) {
     println!(
         "  {}  {}  {}",
         "◈".bright_cyan(),
+        tool_name.cyan().bold(),
+        display.dimmed()
+    );
+}
+
+pub fn print_tool_call_with_model(tool_name: &str, args_display: &str, model: &str) {
+    let short_model = model.trim_start_matches("models/")
+        .split('-')
+        .filter(|s| !s.is_empty())
+        .take(3)
+        .collect::<Vec<_>>()
+        .join("-");
+    let display = if args_display.len() > 70 {
+        let end = if args_display.is_char_boundary(67) { 67 } else { args_display.floor_char_boundary(67) };
+        format!("{}…", &args_display[..end])
+    } else {
+        args_display.to_string()
+    };
+    println!(
+        "  {} [{}] {}  {}",
+        "◈".bright_cyan(),
+        short_model.bright_blue(),
         tool_name.cyan().bold(),
         display.dimmed()
     );

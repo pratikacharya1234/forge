@@ -1324,7 +1324,7 @@ async fn agentic_loop(
             iterations = 0;
         }
 
-        ui::print_thinking();
+        ui::print_thinking_with_model(&config.model);
 
         let request = GenerateContentRequest {
             contents:           history.clone(),
@@ -1517,13 +1517,32 @@ async fn agentic_loop(
 
         // ── Explain-before-execute ──────────────────────────────────────────
         if explain_exec && !function_calls.is_empty() && !config.auto_apply {
+            let short_model = config.model.trim_start_matches("models/")
+                .split('-')
+                .filter(|s| !s.is_empty())
+                .take(3)
+                .collect::<Vec<_>>()
+                .join("-");
             println!();
-            println!("  {} Planned actions:", "[PLAN]".cyan());
-            for fc in &function_calls {
+            println!("  ╔══════════════════════════════════════╗");
+            println!("  ║  {} {} {} ║", "📋 PLAN".cyan().bold(), "—".dimmed(), short_model.bright_blue());
+            println!("  ╠══════════════════════════════════════╣");
+            for (i, fc) in function_calls.iter().enumerate() {
                 let args_summary = fmt_args_compact(&fc.args);
-                println!("    {} {} {}", "▸".cyan(), fc.name.yellow(), args_summary.dimmed());
+                let num = i + 1;
+                println!("  ║  {} {}  {}", num.to_string().cyan(), fc.name.yellow().bold(), " ".repeat(1));
+                if !args_summary.is_empty() {
+                    let truncated = if args_summary.len() > 30 {
+                        format!("{}…", &args_summary[..27])
+                    } else {
+                        args_summary
+                    };
+                    println!("  ║     {}", truncated.dimmed());
+                }
+                println!("  ║     {}", format!("╰─ {}", fc.name).dimmed());
             }
-            print!("  {} Proceed? [Y/n] ", "?".yellow());
+            println!("  ╚══════════════════════════════════════╝");
+            print!("  {} Execute? [Y/n] ", "⚡".yellow());
             let _ = std::io::stdout().flush();
             let mut ans = String::new();
             let _ = std::io::stdin().read_line(&mut ans);

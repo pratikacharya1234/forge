@@ -2,6 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import ForgeCanvas from '../components/3d/ForgeCanvas.svelte';
 import Terminal from '../components/ui/Terminal.svelte';
+import Analytics from '../components/ui/Analytics.svelte';
 ---
 
 <Layout title="FORGE - The Multi-Model AI Coding Agent">
@@ -66,4 +67,7 @@ import Terminal from '../components/ui/Terminal.svelte';
 			</div>
 		</div>
 	</section>
+
+	<Analytics client:load />
+</Layout>
 </Layout>
