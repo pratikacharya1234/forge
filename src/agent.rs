@@ -228,6 +228,7 @@ fn system_prompt(config: &Config) -> String {
         .replace("{learnings_context}", &learnings_ctx)
         .replace("{cwd}", &cwd_safe)
         + grounding_line
+        + &crate::domain_knowledge::domain_guidance()
 }
 
 // ── Tool list / config ─────────────────────────────────────────────────────────

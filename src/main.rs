@@ -22,6 +22,7 @@ mod tools;
 mod ui;
 mod packer;
 mod ci_runner;
+mod domain_knowledge;
 mod voice;
 mod ember;
 
