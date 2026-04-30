@@ -235,14 +235,11 @@ pub fn print_tool_result_err(err: &str) {
 
 pub fn print_assistant_prefix() {
     println!();
-    println!("  ╭{} {}", "─".repeat(2), "─".repeat(56));
-    println!("  │ {} OUTPUT", "💬".bright_cyan().bold());
-    println!("  ├{} {}", "─".repeat(2), "─".repeat(56));
-    print!("  ");
+    print!("{} ", "FORGE".bright_blue().bold());
 }
 
 pub fn user_prompt_str() -> String {
-    format!("\n  {} {}", "╰─".bright_green(), ">".bright_green().bold())
+    format!("{} ", "▸".bright_green().bold())
 }
 
 // ── Error / info ──────────────────────────────────────────────────────────────

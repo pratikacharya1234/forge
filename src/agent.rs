@@ -1421,24 +1421,14 @@ async fn agentic_loop(
             if thought_active.get() {
                 let rem = thought_buf.borrow().trim_end().to_string();
                 if !rem.is_empty() {
-                    if rem.len() > 60 {
-                        println!("  │ {}", rem.yellow());
-                    } else {
-                        println!("  │ {}", rem.yellow());
-                    }
+                    println!("  │ {}", rem.yellow());
                 }
                 thought_buf.borrow_mut().clear();
                 println!("  ╰{} {}", "─".repeat(2), "─".repeat(56));
                 println!("    {}", "✅  Reasoning complete".green());
                 thought_active.set(false);
             }
-            if first_text.get() {
-                println!();
-                println!("  ╭{} {}", "─".repeat(2), "─".repeat(56));
-                println!("  │ {} OUTPUT", "💬".bright_cyan().bold());
-                println!("  ├{} {}", "─".repeat(2), "─".repeat(56));
-                first_text.set(false);
-            }
+            if first_text.get() { first_text.set(false); }
             print!("{}", chunk);
             let _ = std::io::stdout().flush();
         };
