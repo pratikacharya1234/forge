@@ -1,0 +1,11 @@
+[[steps]]
+task = "Create a simple Go CLI tool in demo/main.go that reads a CSV file from a flag, calculates min/max/mean for numeric columns, and outputs JSON to stdout. Use proper error handling."
+description = "Create Go CLI tool"
+
+[[steps]]
+task = "Add unit tests to the Go tool in demo/main_test.go covering the CSV parsing and statistics calculation."
+description = "Add unit tests"
+
+[[steps]]
+task = "Run 'go build -o demo/forge-demo ./demo' and 'go test ./demo/...' to verify the project."
+description = "Build and verify tests"

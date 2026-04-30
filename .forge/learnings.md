@@ -18,3 +18,9 @@ Astro:  -> Error pattern detected during bash — investigate and fix root cause
 astro  <6.1.6
 Severity: moderate
 A -> Error pattern detected during read_file — investigate and fix root cause [fixed]
+
+## filesystem
+
+- [3] file not found -> Verify file paths before bash. Use list_files or glob to confirm paths exist.
+- [1] # command-line-arguments
+demo/main.go:73:9: declared and not -> Error pattern detected during bash — investigate and fix root cause

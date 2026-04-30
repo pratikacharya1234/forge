@@ -1,0 +1,449 @@
+# Project Context: forge
+Generated: 2026-04-30 02:01
+
+## Recent Git History
+```
+1fd275e feat: Voice command system — record mic + transcribe via Gemini multimodal API
+b33f40f feat: Model badge in reasoning UI + ASCII plan approval box
+761269c feat: FORGE Model Arena — 5-page 3D interactive website (Three.js/Threlte)
+8fd0f7b chore: Fix warnings — zero-warning release build
+fdc9f39 feat: Phase 3 — CI headless mode + shareable task pipelines
+8d412c8 feat: Phase 2 — API proxy support (--api-base) + smarter test-fix
+451a539 feat: Phase 2 — Project context packer (forge-cli --pack)
+a285430 feat: Phase 2 — Ollama/Llama offline mode support
+335d34a feat: Phase 1 — FREE tier cost display + demo script + CHANGELOG
+3061762 feat: Phase 1 — Gemini free tier guide in README + model auto-fallback on rate limits
+```
+
+**Remote:** https://github.com/pratikacharya1234/forge.git
+
+## Project Structure
+```
+.forge/
+  audit.log  (7393B)
+  learnings.md  (891B)
+  pipelines/
+    demo.toml  (536B)
+  project.md  (1747B)
+  safety.toml  (592B)
+.gitignore  (449B)
+CHANGELOG.md  (5006B)
+CONTRIBUTING.md  (2766B)
+Cargo.lock  (59306B)
+Cargo.toml  (797B)
+LICENSE  (1071B)
+README.md  (9886B)
+demo.sh  (2828B)
+install.sh  (10043B)
+package.json  (144B)
+packages/
+  checksums.sha256  (96B)
+  forge-cli-linux-x86_64.tar.gz  (4260801B)
+release.sh  (5564B)
+site/
+  .astro/
+    collections/
+    content-assets.mjs  (25B)
+    content-modules.mjs  (25B)
+    content.d.ts  (6942B)
+    data-store.json  (1945B)
+    settings.json  (58B)
+    types.d.ts  (39B)
+  .forge/
+    audit.log  (1425B)
+  astro.config.mjs  (706B)
+  package-lock.json  (223289B)
+  package.json  (627B)
+  public/
+    data/
+      arena-replays/
+    fonts/
+      Inter-VariableFont_slnt,wght.ttf  (862936B)
+      JetBrainsMono-VariableFont_wght.ttf  (300144B)
+  src/
+    components/
+      3d/
+      ui/
+    data/
+      arena-replays/
+    layouts/
+      Layout.astro  (3813B)
+    lib/
+      events.ts  (220B)
+    pages/
+      arena.astro  (624B)
+      dna.astro  (763B)
+      docs.astro  (3404B)
+      index.astro  (3787B)
+      security.astro  (2615B)
+    styles/
+      global.css  (1652B)
+src/
+  agent.rs  (93855B)
+  audit.rs  (1864B)
+  backend.rs  (63045B)
+  ci_runner.rs  (2135B)
+  config.rs  (6229B)
+  diff_view.rs  (9322B)
+  integrations/
+    discord.rs  (19427B)
+    github.rs  (32176B)
+    google.rs  (46625B)
+    mod.rs  (5149B)
+  learning.rs  (14276B)
+  main.rs  (8080B)
+  mcp.rs  (16974B)
+  models.rs  (11834B)
+  orchestrator.rs  (39230B)
+  packer.rs  (4555B)
+  project.rs  (4202B)
+  safety.rs  (9277B)
+  security.rs  (11293B)
+  session.rs  (8199B)
+  snapshot.rs  (1706B)
+  test_harness.rs  (13153B)
+  token_counter.rs  (11485B)
+  tools.rs  (37575B)
+  types.rs  (12760B)
+  ui.rs  (21253B)
+  voice.rs  (3503B)
+tests/
+```
+
+## Key Files
+
+### README.md
+```
+# FORGE
+
+<p align="center">
+  <img src="https://img.shields.io/badge/price-FREE-green.svg" alt="100% Free">
+  <img src="https://img.shields.io/badge/version-0.0.1-blue.svg" alt="Version 0.0.1">
+  <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License">
+  <img src="https://img.shields.io/badge/rust-1.75%2B-orange.svg" alt="Rust 1.75+">
+  <img src="https://img.shields.io/badge/context-1M%20tokens-green.svg" alt="1M Token Context">
+  <img src="https://img.shields.io/badge/models-Gemini%20%7C%20Claude%20%7C%20GPT-purple.svg" alt="Multi-model">
+  <img src="https://img.shields.io/badge/binary-12MB-lightgrey.svg" alt="Binary 12MB">
+</p>
+
+---
+
+**FORGE** is the open-source, multi-model terminal AI coding agent. 1M token context. Built in Rust. Works with Gemini, Claude, and GPT  routing each task to the best model automatically. Free. No subscriptions. No lock-in.
+
+### What Makes FORGE Different
+
+FORGE is the **only** coding agent that:
+- **Gets smarter every session** — ALICE learns from errors and auto-injects lessons
+- **Auto-detects project conventions** — language, indentation, build system, linter config
+- **Decomposes tasks across AI models** — routes each subtask to the best provider
+- **Runs parallel subagents** — critical work to reasoning models, routine to fast models
+- **Verifies with a second model** — cross-provider consensus on critical changes
+- **Auto-researches before coding** — web searches for docs, APIs, best practices
+- **Auto-escalates on failure** — starts cheap, upgrades automatically
+
+### Comparison
+
+| | FORGE | Claude Code | Cursor | Copilot |
+|---|---|---|---|---|
+| **Price** | Free | $20-200/mo | $20/mo | $10/mo |
+| **Open source** | MIT | Proprietary | Proprietary | Proprietary |
+| **Multi-model** | Gemini + Claude + GPT | Claude only | Multi-model | GPT only |
+| **Max context** | 1M tokens | 200K | ~200K | ~64K |
+| **Task decomposition** | Automatic + multi-model | Manual subagents | No | No |
+| **Consensus verification** | Cross-provider | No | No | No |
+| **Auto-escalation** | Yes | No | No | No |
+| **Pre-execution research** | Yes | No | No | No |
+| **Auto-learning (ALICE)** | **Yes** | No | No | No |
+| **Project DNA detection** | **Yes** | No | No | No |
+| **Interface** | Terminal | Terminal | VS Code | VS Code |
+| **MCP support** | Yes | Yes | Yes | No |
+| **Native integrations** | GitHub, Discord, Gmail, Drive | GitHub | None | GitHub |
+| **Free tier** | ✅ Gemini 1,500 req/day | ❌ | ❌ | ❌ |
+
+## 💯 100% Free — No Credit Card, No Subscription
+
+FORGE works with **Gemini's free tier**. That means:
+
+- ✅ **0 dollars.** Forever. No trial that expires.
+- ✅ **1,500 requests per day** on Gemini Flash — more than enough for heavy coding sessions
+- ✅ **1 MILLION token context window** — 5x Claude Code, 15x Copilot
+- ✅ **No rate limit anxiety** — you're on your own API key, not someone's quota
+- ✅ **Pay only if you want to** — add Claude or GPT keys for complex tasks, keep Gemini for everything else
+
+**Get your free key in 30 seconds:**
+1. Go to https://aistudio.google.com/apikey
+2. Click "Create API Key"
+3. Copy it. That's it. No billing setup. No credit card.
+
+```bash
+export GEMINI_API_KEY="your-free-key-here"
+forge-cli
+# That's it. You're coding with AI. For free.
+```
+
+> **Why this matters:** Claude Code costs $20-200/month plus per-token usage. Users report spending $25 in a single session. Cursor costs $20/month. Copilot costs $10/month. FORGE costs nothing. Use the free Gemini tier for 90% of your work, add Claude only when you need it, switch back anytime. No lock-in. No subscription to cancel.
+
+## Quick Start
+
+```bash
+# One-liner install
+curl -fsSL https://raw.githubusercontent.com/pratikacharya1234/forge/main/install.sh | bash
+
+# Or clone and build
+git clone https://github.com/pratikacharya1234/forge.git
+cd forge
+cargo build --release
+
+# Get a free API key (30 seconds, no credit card)
+# → https://aistudio.google.com/apikey
+
+export GEMINI_API_KEY="your-free-key"
+forge-cli
+```
+
+## Usage
+
+```bash
+# Interactive session
+forge-cli
+
+# Full task pipeline — research, decompose, dispatch, verify
+forge-cli --prompt "/task add rate limiting to the API endpoints"
+
+# With specific models
+forge-cli --model claude-4-sonnet --anthropic-api-key "sk-ant-..."
+forge-cli --model gpt-4.1 --openai-api-key "sk-..."
+forge-cli --model auto     # auto-select best model per task
+... (truncated, 253 total lines)
+```
+
+### package.json
+```
+{
+  "name": "forge",
+  "version": "0.0.1",
+  "private": true,
+  "description": "FORGE — Gemini-powered AI coding agent (Rust terminal app)"
+}
+
+```
+
+### Cargo.toml
+```
+[package]
+name = "forge"
+version = "0.0.1"
+edition = "2021"
+description = "Multi-model terminal AI coding agent — forge code with any model"
+authors = ["pratikacharya1234"]
+
+[[bin]]
+name = "forge-cli"
+path = "src/main.rs"
+
+[dependencies]
+tokio        = { version = "1",    features = ["full"] }
+reqwest      = { version = "0.11", features = ["json", "stream"] }
+serde        = { version = "1",    features = ["derive"] }
+serde_json   = "1"
+colored      = "2"
+rustyline    = "14"
+clap         = { version = "3",    features = ["derive", "env"] }
+anyhow       = "1"
+dirs         = "5"
+walkdir      = "2"
+regex        = "1"
+futures-util = "0.3"
+glob         = "0.3"
+base64       = "0.22"
+toml         = "0.8"
+similar      = "2"
+uuid         = { version = "1", features = ["v4"] }
+chrono = "0.4.38"
+
+```
+
+### .gitignore
+```
+# Build artifacts
+/target/
+**/*.rs.bk
+
+# Cargo lock (binary project)
+# Cargo.lock
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+
+# FORGE runtime data (contains audit logs, sessions, cached tokens)
+.forge/audit.log
+.forge/sessions/
+
+# Binary releases
+*.tar.gz
+*.zip
+packages/
+
+# Generated reports
+security_audit_*.md
+AI_Coding_Tools_Comparison.md
+
+# Website
+site/node_modules/
+site/dist/
+site/.astro/
+
+```
+
+### src/main.rs
+```
+use anyhow::Result;
+use clap::Parser;
+
+mod agent;
+mod audit;
+mod backend;
+mod config;
+mod diff_view;
+mod learning;
+mod types;
+mod integrations;
+mod mcp;
+mod models;
+mod orchestrator;
+mod project;
+mod safety;
+mod security;
+mod session;
+mod snapshot;
+mod token_counter;
+mod tools;
+mod ui;
+mod packer;
+mod ci_runner;
+mod voice;
+
+#[cfg(test)]
+mod test_harness;
+
+#[derive(Parser, Debug)]
+#[clap(
+    name    = "forge",
+    about   = "FORGE — Multi-model terminal AI coding agent",
+    version = "0.0.1",
+    long_about = None
+)]
+struct Args {
+    /// API key for Gemini backend (or set FORGE_API_KEY / GEMINI_API_KEY env var).
+    #[clap(short = 'k', long, env = "FORGE_API_KEY")]
+    api_key: Option<String>,
+
+    /// Model to use (auto-detected if not specified).
+    #[clap(short, long)]
+    model: Option<String>,
+
+    /// Enable Google Search grounding.
+    #[clap(short, long)]
+    grounding: bool,
+
+    /// Enable ThinkMode (gemini-2.5+ only).
+    #[clap(short, long)]
+    think: bool,
+
+    /// ThinkMode token budget (default 8000, max 24576, 0 = unlimited).
+    #[clap(long, default_value = "8000")]
+    think_budget: i32,
+
+    /// Auto-apply all file changes without diff preview.
+    #[clap(long)]
+    auto_apply: bool,
+
+    /// Pack project context into a portable file for sharing with any AI.
+    #[clap(long)]
+    pack: Option<String>,
+
+    /// Custom API base URL for proxying (e.g., LiteLLM, OpenRouter).
+    #[clap(long)]
+    api_base: Option<String>,
+    #[clap(long)]
+    ci: bool,
+
+    /// Voice input — record mic, transcribe via Gemini, run as prompt.
+    #[clap(long)]
+    voice: bool,
+
+    #[clap(long)]
+    pipeline: Option<String>,
+
+    /// Max tool-call iterations per turn before pausing (0 = unlimited).
+    #[clap(long, default_value = "50")]
+    max_iter: u32,
+
+    /// Run a single prompt non-interactively and exit.
+    #[clap(short, long)]
+    prompt: Option<String>,
+
+    /// Attach a screenshot to the initial prompt (ScreenFix).
+    #[clap(long)]
+    screenshot: Option<String>,
+
+    /// Anthropic (Claude) API key.
+    #[clap(long, env = "ANTHROPIC_API_KEY")]
+    anthropic_api_key: Option<String>,
+
+    /// OpenAI API key.
+    #[clap(long, env = "OPENAI_API_KEY")]
+    openai_api_key: Option<String>,
+
+    /// Explain planned actions before executing tools.
+    #[clap(long)]
+... (truncated, 249 total lines)
+```
+
+## Rust Dependencies
+```toml
+[package]
+name = "forge"
+version = "0.0.1"
+edition = "2021"
+description = "Multi-model terminal AI coding agent — forge code with any model"
+authors = ["pratikacharya1234"]
+
+[[bin]]
+name = "forge-cli"
+path = "src/main.rs"
+
+[dependencies]
+tokio        = { version = "1",    features = ["full"] }
+reqwest      = { version = "0.11", features = ["json", "stream"] }
+serde        = { version = "1",    features = ["derive"] }
+serde_json   = "1"
+colored      = "2"
+rustyline    = "14"
+clap         = { version = "3",    features = ["derive", "env"] }
+anyhow       = "1"
+dirs         = "5"
+walkdir      = "2"
+regex        = "1"
+futures-util = "0.3"
+glob         = "0.3"
+base64       = "0.22"
+toml         = "0.8"
+similar      = "2"
+uuid         = { version = "1", features = ["v4"] }
+chrono = "0.4.38"
+
+```
+

@@ -1,0 +1,13 @@
+name: FORGE CI
+on: [push]
+jobs:
+  forge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Build FORGE
+        run: cargo build --release
+      - name: Run FORGE CI
+        run: ./target/release/forge-cli --ci --prompt "fix any bugs or warnings" --json

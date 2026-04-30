@@ -359,6 +359,41 @@ pub async fn run_ci_agent(client: &BackendClient, config: &Config, prompt: &str)
     })
 }
 
+/// JARVIS voice query — runs a single prompt and returns just the text response.
+/// Used by the voice conversation loop. No tool execution, just chat.
+pub async fn run_jarvis_query(config: &Config, prompt: &str) -> Result<String> {
+    let client = BackendClient::new(config)?;
+    let mcp = Arc::new(McpRegistry::startup(&config.mcp_servers).await);
+    let integrations = Arc::new(IntegrationRegistry::from_config(&config.integrations));
+    let mut cost_tracker = CostTracker::new(&config.model, config.daily_budget_usd);
+    let parts = vec![Part::text(prompt)];
+    let mut history = vec![Content { role: "user".to_string(), parts }];
+    let sys = system_prompt(config);
+
+    let request = GenerateContentRequest {
+        contents: history.clone(),
+        tools: vec![],
+        tool_config: None,
+        system_instruction: Some(SystemContent { parts: vec![Part::text(&sys)] }),
+        generation_config: Some(build_generation_config(config.thinking, config.thinking_budget)),
+    };
+
+    let response = client.generate(request).await?;
+    if let Some(candidates) = response.candidates {
+        for c in candidates {
+            if let Some(content) = c.content {
+                let text: String = content.parts.iter().filter_map(|p| {
+                    if let Part::Text { text, .. } = p { Some(text.as_str()) } else { None }
+                }).collect::<Vec<_>>().join(" ");
+                if !text.is_empty() {
+                    return Ok(text);
+                }
+            }
+        }
+    }
+    Ok("I processed that but had no response.".to_string())
+}
+
 pub async fn run_interactive(config: &Config) -> Result<()> {
     // Initialize registries first so integration count is known before the banner
     let mcp = Arc::new(McpRegistry::startup(&config.mcp_servers).await);

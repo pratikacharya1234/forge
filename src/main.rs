@@ -23,6 +23,7 @@ mod ui;
 mod packer;
 mod ci_runner;
 mod voice;
+mod jarvis;
 
 #[cfg(test)]
 mod test_harness;
@@ -72,6 +73,10 @@ struct Args {
     /// Voice input — record mic, transcribe via Gemini, run as prompt.
     #[clap(long)]
     voice: bool,
+
+    /// JARVIS mode — real-time voice conversation with TTS responses.
+    #[clap(long)]
+    jarvis: bool,
 
     #[clap(long)]
     pipeline: Option<String>,
@@ -216,6 +221,12 @@ async fn main() -> Result<()> {
         explain_before_execute: args.explain || file_cfg.explain_before_execute,
         api_base: args.api_base,
     };
+
+    // JARVIS mode — real-time voice conversation loop
+    if args.jarvis {
+        jarvis::jarvis_loop(&config).await?;
+        return Ok(());
+    }
 
     // Voice mode — record mic, transcribe, run as prompt
     if args.voice {

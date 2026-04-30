@@ -77,6 +77,17 @@ pub async fn transcribe_audio(audio_bytes: &[u8], api_key: &str) -> Result<Strin
     Ok(text)
 }
 
+/// Shorthand: record + transcribe, return text.
+pub async fn record_and_transcribe(api_key: &str, duration_secs: u32) -> Result<String> {
+    use colored::Colorize;
+
+    println!("  {} Listening...", "🎙️".bright_red());
+    let audio = record_audio(duration_secs)?;
+    let text = transcribe_audio(&audio, api_key).await?;
+    println!("  {} {}", "🗣️".cyan(), text.bright_white());
+    Ok(text)
+}
+
 /// Full voice prompt flow: record → transcribe → return text.
 /// Used by `--voice` flag to replace CLI text input with spoken commands.
 pub async fn voice_prompt(api_key: &str, duration_secs: u32) -> Result<String> {
