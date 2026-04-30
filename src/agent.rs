@@ -1378,7 +1378,15 @@ async fn agentic_loop(
         let mut on_thought = |chunk: &str| {
             if !thought_active.get() {
                 println!();
-                println!("  {} {}", "[THINK]".yellow(), "THINKING...".yellow().dimmed());
+                let short_model = config.model.trim_start_matches("models/")
+                    .split('-')
+                    .filter(|s| !s.is_empty())
+                    .take(3)
+                    .collect::<Vec<_>>()
+                    .join("-");
+                println!("  ╭{} {}", "─".repeat(2), "─".repeat(56));
+                println!("  │ {} REASONING {}", "🧠".bright_yellow(), short_model.bright_blue().bold());
+                println!("  ├{} {}", "─".repeat(2), "─".repeat(56));
                 thought_active.set(true);
             }
             thought_buf.borrow_mut().push_str(chunk);
@@ -1386,7 +1394,25 @@ async fn agentic_loop(
             while let Some(pos) = buf.find('\n') {
                 let line = buf[..pos].to_string();
                 *buf = buf[pos + 1..].to_string();
-                println!("  {} {}", "│".dimmed(), line.dimmed().yellow());
+                // Truncate long lines for display, wrap if needed
+                if line.len() > 60 {
+                    let words: Vec<&str> = line.split_whitespace().collect();
+                    let mut current = String::new();
+                    for w in words {
+                        if current.len() + w.len() + 1 > 58 {
+                            println!("  │ {}", current.yellow());
+                            current = w.to_string();
+                        } else {
+                            if !current.is_empty() { current.push(' '); }
+                            current.push_str(w);
+                        }
+                    }
+                    if !current.is_empty() {
+                        println!("  │ {}", current.yellow());
+                    }
+                } else {
+                    println!("  │ {}", line.yellow());
+                }
             }
             let _ = std::io::stdout().flush();
         };
@@ -1395,14 +1421,22 @@ async fn agentic_loop(
             if thought_active.get() {
                 let rem = thought_buf.borrow().trim_end().to_string();
                 if !rem.is_empty() {
-                    println!("  {} {}", "│".dimmed(), rem.dimmed().yellow());
+                    if rem.len() > 60 {
+                        println!("  │ {}", rem.yellow());
+                    } else {
+                        println!("  │ {}", rem.yellow());
+                    }
                 }
                 thought_buf.borrow_mut().clear();
-                println!("  {} {}", "[OK]".green().dimmed(), "Reasoning complete.".dimmed());
+                println!("  ╰{} {}", "─".repeat(2), "─".repeat(56));
+                println!("    {}", "✅  Reasoning complete".green());
                 thought_active.set(false);
             }
             if first_text.get() {
-                print!("\n{} ", "FORGE".bright_blue().bold());
+                println!();
+                println!("  ╭{} {}", "─".repeat(2), "─".repeat(56));
+                println!("  │ {} OUTPUT", "💬".bright_cyan().bold());
+                println!("  ├{} {}", "─".repeat(2), "─".repeat(56));
                 first_text.set(false);
             }
             print!("{}", chunk);
