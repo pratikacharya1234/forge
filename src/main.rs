@@ -252,6 +252,9 @@ async fn main() -> Result<()> {
 
     if let Some(prompt) = args.prompt {
         agent::run_once(&config, &prompt, args.screenshot.as_deref()).await?;
+    } else if jarvis::mic_available() {
+        // Mic detected — auto-launch JARVIS voice mode
+        jarvis::jarvis_loop(&config).await?;
     } else {
         agent::run_interactive(&config).await?;
     }

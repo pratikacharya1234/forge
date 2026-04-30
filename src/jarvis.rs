@@ -1,127 +1,94 @@
-// JARVIS — Real-time voice conversation mode for FORGE.
-// Voice → Gemini transcribe (free) → FORGE agent (any model) → spd-say TTS
-// Persistent memory. Continuous conversation. Speaks back.
+// JARVIS — Iron Man style real-time voice AI assistant.
+// Auto-greet, voice-first, zero keyboard. Pure Rust audio via cpal.
+// Memory persists. Speaks back via spd-say TTS.
 
 use anyhow::Result;
 use colored::Colorize;
 use std::io::Write;
 
-/// Run the JARVIS voice conversation loop.
+/// Check if a microphone is available for JARVIS mode.
+pub fn mic_available() -> bool {
+    crate::voice::check_audio()
+}
+
 pub async fn jarvis_loop(config: &crate::config::Config) -> Result<()> {
+    // ── Greeting ───────────────────────────────────────────────────────────
     println!();
     println!("  ╔══════════════════════════════════════════════╗");
-    println!("  ║         🧠  JARVIS MODE ACTIVE               ║");
     println!("  ║                                              ║");
-    println!("  ║  Voice → Gemini (free) → {} → 🔊          ║", 
-        model_label(config));
-    println!("  ║  [ENTER] speak  [s] type  [q] quit           ║");
+    println!("  ║         🧠  J.A.R.V.I.S.  ONLINE             ║");
+    println!("  ║                                              ║");
+    println!("  ║  {}    {}", "Voice-driven".bright_cyan().bold(), config.model.dimmed());
     println!("  ╚══════════════════════════════════════════════╝");
     println!();
 
-    // Load memory
+    let has_mic = crate::voice::check_audio();
+    if !has_mic {
+        println!("  {} No mic detected. Run: forge-cli", "⚠️ ".yellow());
+        println!();
+        return Ok(());
+    }
+
+    // Greet the user
+    let greeting = format!(
+        "Hello. I'm FORGE, your AI assistant. I see you're in the {} project. How can I help?",
+        get_project_name()
+    );
+    speak(&greeting);
+    println!("  {} {}", "🧠".bright_blue(), greeting.bright_white());
+    println!();
+    println!("  {} Speak now — I'm listening...", "🎤".bright_red());
+    println!("  {} Say \"quit\" or \"exit\" to stop | Hold for 4 seconds to speak", "  ".dimmed());
+    println!();
+
+    // ── Memory ─────────────────────────────────────────────────────────────
     let mem_path = dirs::home_dir()
         .unwrap_or_else(|| std::path::PathBuf::from("."))
         .join(".forge")
         .join("jarvis-memory.md");
     
     let mut memory: Vec<String> = if mem_path.exists() {
-        std::fs::read_to_string(&mem_path)
-            .unwrap_or_default()
-            .lines()
-            .map(|l| l.to_string())
-            .filter(|l| !l.trim().is_empty())
-            .collect()
-    } else {
-        Vec::new()
-    };
+        std::fs::read_to_string(&mem_path).unwrap_or_default()
+            .lines().map(|l| l.to_string()).filter(|l| !l.trim().is_empty()).collect()
+    } else { Vec::new() };
 
-    if !memory.is_empty() {
-        println!("  {} Loaded {} past exchanges", "🧠".dimmed(), memory.len() / 2);
-        println!();
-    }
-
-    // Check audio availability
-    let has_audio = crate::voice::check_audio();
-    if !has_audio {
-        println!("  {} No mic found — text mode only", "⚠️ ".yellow());
-        println!("    Install: apt install pulseaudio-utils");
-        println!();
-    }
-
-    let mut voice_failed = !has_audio;
-    let mut consecutive_failures = 0u32;
-
+    // ── Voice loop ─────────────────────────────────────────────────────────
     loop {
-        print!("  {} ", if voice_failed { "⌨️ ".dimmed() } else { "🎤".bright_red() });
+        print!("  {} ", "🎙️".bright_red());
         let _ = std::io::stdout().flush();
-        
-        let mut mode = String::new();
-        std::io::stdin().read_line(&mut mode)?;
-        let mode = mode.trim().to_lowercase();
 
-        if mode == "q" || mode == "quit" || mode == "exit" {
-            println!();
-            println!("  {} JARVIS signing off. Memory saved.", "👋".cyan());
-            save_memory(&mem_path, &memory);
-            return Ok(());
-        }
-
-        if mode == "s" || mode == "type" {
-            voice_failed = true; // Switch to text permanently
-        }
-
-        // Get the user message
-        let user_message = if !voice_failed {
-            match crate::voice::record_and_transcribe(&config.api_key, 6).await {
-                Ok(text) => {
-                    consecutive_failures = 0;
-                    text
-                }
-                Err(e) => {
-                    consecutive_failures += 1;
-                    if consecutive_failures >= 2 {
-                        println!("  {} Voice unavailable — switching to text mode", "⚠️".yellow());
-                        voice_failed = true;
-                    } else {
-                        println!("  {} {}", "❌".red(), e.to_string().red());
-                    }
-                    continue;
-                }
+        // Listen for speech — 5 second recording window
+        let user_message = match crate::voice::listen_and_transcribe(&config.api_key, 5).await {
+            Ok(text) => text,
+            Err(_) => {
+                // Silently retry
+                continue;
             }
-        } else {
-            // Text mode
-            print!("  {} You: ", "💬".dimmed());
-            let _ = std::io::stdout().flush();
-            let mut text = String::new();
-            std::io::stdin().read_line(&mut text)?;
-            let text = text.trim().to_string();
-            if text.is_empty() { continue; }
-            text
         };
 
         if user_message.is_empty() { continue; }
 
-        // Remember this
+        println!("  {} {}", "🗣️".cyan(), user_message.bright_white());
+
+        // Check for exit commands
+        let lower = user_message.to_lowercase();
+        if lower.contains("quit") || lower.contains("exit") || lower.contains("goodbye") || lower.contains("bye") {
+            let farewell = "Goodbye. Shutting down JARVIS.";
+            speak(farewell);
+            println!("  {} {}", "👋".cyan(), farewell.bright_white());
+            save_memory(&mem_path, &memory);
+            return Ok(());
+        }
+
         memory.push(format!("User: {}", user_message));
 
-        // Build context prompt
-        let context_prompt = if memory.len() > 2 {
-            let recent: String = memory.iter()
-                .rev().take(6).collect::<Vec<_>>()
-                .iter().rev().map(|s| s.as_str())
-                .collect::<Vec<_>>().join("\n");
-            format!(
-                "You are JARVIS — FORGE's voice assistant. Be concise, helpful, conversational. 1-3 sentences max.\n\
-                 Recent conversation:\n{}\n\nUser: {}", recent, user_message
-            )
-        } else {
-            format!("You are JARVIS. Be concise, conversational, 1-3 sentences.\nUser: {}", user_message)
-        };
+        // Build context
+        let context = build_context(&memory, &user_message);
 
-        // Run through FORGE
-        let response = match crate::agent::run_jarvis_query(config, &context_prompt).await {
+        // Process
+        let response = match crate::agent::run_jarvis_query(config, &context).await {
             Ok(text) => text,
-            Err(e) => format!("Sorry, something went wrong: {}", e),
+            Err(e) => format!("Sorry, I encountered an error: {}", e),
         };
 
         memory.push(format!("FORGE: {}", response));
@@ -129,25 +96,33 @@ pub async fn jarvis_loop(config: &crate::config::Config) -> Result<()> {
         // Speak it
         speak(&response);
 
-        println!();
         println!("  {} {}", "🧠".bright_blue(), response.bright_white());
         println!();
     }
 }
 
-fn model_label(config: &crate::config::Config) -> String {
-    if config.model.contains("claude") {
-        "Claude".purple().bold().to_string()
-    } else if config.model.contains("gpt") || config.model.contains("o3") || config.model.contains("o4") {
-        "GPT".bright_yellow().bold().to_string()
-    } else {
-        "Gemini".green().bold().to_string()
+fn build_context(memory: &[String], user_msg: &str) -> String {
+    if memory.len() <= 2 {
+        return format!("You are JARVIS — FORGE's voice AI. Be concise, helpful, conversational. 1-3 sentences.\nUser: {}", user_msg);
     }
+    let recent: String = memory.iter().rev().take(6)
+        .collect::<Vec<_>>().iter().rev().map(|s| s.as_str())
+        .collect::<Vec<_>>().join("\n");
+    format!(
+        "You are JARVIS — FORGE's voice AI. Be concise, conversational, 1-3 sentences.\nRecent:\n{}\n\nUser: {}", 
+        recent, user_msg
+    )
 }
 
+fn get_project_name() -> String {
+    std::env::current_dir().ok()
+        .and_then(|p| p.file_name().map(|n| n.to_string_lossy().to_string()))
+        .unwrap_or_else(|| "current".to_string())
+}
+
+/// Text-to-speech via spd-say (speech-dispatcher).
 fn speak(text: &str) {
-    let clean = text
-        .replace('`', "").replace('*', "").replace('#', "")
+    let clean = text.replace('`', "").replace('*', "").replace('#', "")
         .replace("```", "").replace("___", "").trim().to_string();
     if clean.is_empty() { return; }
     let _ = std::process::Command::new("spd-say")

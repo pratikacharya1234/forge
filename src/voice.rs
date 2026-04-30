@@ -1,91 +1,102 @@
-// Voice input — record from microphone, transcribe via Gemini multimodal API.
-// Tries pw-record > parec > sox > arecord. Converts raw PCM to WAV on the fly.
+// Pure Rust voice capture via cpal. No external commands needed.
+// Cross-platform mic recording → WAV encoding → Gemini transcription.
 use anyhow::{Context, Result};
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
-use std::process::Command;
+use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
+use std::sync::{Arc, Mutex};
 
-/// Check if any audio recording tool is available.
+/// Check if a microphone is available.
 pub fn check_audio() -> bool {
-    Command::new("pw-record").arg("--version").output().is_ok()
-        || Command::new("parec").arg("--version").output().is_ok()
-        || Command::new("sox").arg("--version").output().is_ok()
-        || Command::new("arecord").arg("--version").output().is_ok()
+    cpal::default_host()
+        .default_input_device()
+        .is_some()
 }
 
-/// Record audio from default microphone. Returns proper WAV bytes.
-/// Tries: timeout pw-record > timeout parec > sox > arecord
+/// Record audio from default mic for `duration_secs`. Returns WAV bytes.
 pub fn record_audio(duration_secs: u32) -> Result<Vec<u8>> {
-    let dur = duration_secs.to_string();
-    let timeout = format!("{}", duration_secs + 2);
+    let host = cpal::default_host();
+    let device = host.default_input_device()
+        .context("No microphone found")?;
+    let config = device.default_input_config()
+        .context("No input config")?;
 
-    // pw-record (PipeWire) — needs timeout wrapper since it records forever
-    if Command::new("pw-record").arg("--version").output().is_ok() {
-        if let Ok(output) = Command::new("timeout")
-            .args([&timeout, "pw-record", "--rate", "16000", "--channels", "1", "--format", "s16", "-"])
-            .output()
-        {
-            if !output.stdout.is_empty() {
-                return Ok(raw_to_wav(&output.stdout, 16000, 1, 16));
-            }
+    let sample_rate = config.sample_rate().0;
+    let channels = config.channels() as u16;
+    let sample_format = config.sample_format();
+
+    let samples_needed = (sample_rate * duration_secs) as usize;
+    let recorded = Arc::new(Mutex::new(Vec::new()));
+    let recorded_clone = recorded.clone();
+    let running = Arc::new(Mutex::new(true));
+    let running_clone = running.clone();
+
+    let stream = match sample_format {
+        cpal::SampleFormat::I16 => {
+            let err_fn = |e| eprintln!("  audio err: {}", e);
+            device.build_input_stream(
+                &config.into(),
+                move |data: &[i16], _: &_| {
+                    let mut buf = recorded_clone.lock().unwrap();
+                    for s in data { buf.extend_from_slice(&s.to_le_bytes()); }
+                    if buf.len() / 2 >= samples_needed {
+                        *running_clone.lock().unwrap() = false;
+                    }
+                },
+                err_fn,
+                None,
+            )?
         }
+        cpal::SampleFormat::F32 => {
+            let err_fn = |e| eprintln!("  audio err: {}", e);
+            device.build_input_stream(
+                &config.into(),
+                move |data: &[f32], _: &_| {
+                    let mut buf = recorded_clone.lock().unwrap();
+                    for s in data {
+                        let sample = (s.clamp(-1.0, 1.0) * 32767.0) as i16;
+                        buf.extend_from_slice(&sample.to_le_bytes());
+                    }
+                    if buf.len() / 2 >= samples_needed {
+                        *running_clone.lock().unwrap() = false;
+                    }
+                },
+                err_fn,
+                None,
+            )?
+        }
+        _ => anyhow::bail!("Unsupported sample format: {:?}", sample_format),
+    };
+
+    stream.play()?;
+
+    // Wait until enough samples
+    while *running.lock().unwrap() {
+        std::thread::sleep(std::time::Duration::from_millis(50));
+    }
+    drop(stream);
+
+    let pcm = recorded.lock().unwrap().clone();
+    if pcm.is_empty() {
+        anyhow::bail!("No audio captured — check microphone");
     }
 
-    // parec (PulseAudio)
-    if Command::new("parec").arg("--version").output().is_ok() {
-        if let Ok(output) = Command::new("timeout")
-            .args([&timeout, "parec", "--rate", "16000", "--channels", "1", "--format", "s16le"])
-            .output()
-        {
-            if !output.stdout.is_empty() {
-                return Ok(raw_to_wav(&output.stdout, 16000, 1, 16));
-            }
+    // Encode as WAV
+    let mut wav_buf = Vec::new();
+    {
+        let spec = hound::WavSpec {
+            channels,
+            sample_rate,
+            bits_per_sample: 16,
+            sample_format: hound::SampleFormat::Int,
+        };
+        let mut writer = hound::WavWriter::new(std::io::Cursor::new(&mut wav_buf), spec)?;
+        for chunk in pcm.chunks_exact(2) {
+            let sample = i16::from_le_bytes([chunk[0], chunk[1]]);
+            writer.write_sample(sample)?;
         }
+        writer.finalize()?;
     }
-
-    // sox — self-terminating after duration
-    if Command::new("sox").arg("--version").output().is_ok() {
-        if let Ok(output) = Command::new("sox")
-            .args(["-d", "-t", "wav", "-r", "16000", "-c", "1", "-b", "16", "-", "trim", "0", &dur])
-            .output()
-        {
-            if !output.stdout.is_empty() { return Ok(output.stdout); }
-        }
-    }
-
-    // arecord — self-terminating
-    if Command::new("arecord").arg("--version").output().is_ok() {
-        if let Ok(output) = Command::new("arecord")
-            .args(["-f", "cd", "-t", "wav", "-d", &dur, "-r", "16000"])
-            .output()
-        {
-            if !output.stdout.is_empty() { return Ok(output.stdout); }
-        }
-    }
-
-    anyhow::bail!("No audio recorder found. Install: apt install pulseaudio-utils")
-}
-
-/// Convert raw S16LE PCM bytes to minimal WAV with header.
-fn raw_to_wav(pcm: &[u8], sample_rate: u32, channels: u16, bits: u16) -> Vec<u8> {
-    let data_len = pcm.len() as u32;
-    let byte_rate = sample_rate * channels as u32 * (bits / 8) as u32;
-    let block_align = channels * (bits / 8);
-    let mut wav = Vec::with_capacity(44 + pcm.len());
-    wav.extend_from_slice(b"RIFF");
-    wav.extend_from_slice(&(36 + data_len).to_le_bytes());
-    wav.extend_from_slice(b"WAVE");
-    wav.extend_from_slice(b"fmt ");
-    wav.extend_from_slice(&16u32.to_le_bytes());
-    wav.extend_from_slice(&1u16.to_le_bytes()); // PCM = 1
-    wav.extend_from_slice(&channels.to_le_bytes());
-    wav.extend_from_slice(&sample_rate.to_le_bytes());
-    wav.extend_from_slice(&byte_rate.to_le_bytes());
-    wav.extend_from_slice(&block_align.to_le_bytes());
-    wav.extend_from_slice(&bits.to_le_bytes());
-    wav.extend_from_slice(b"data");
-    wav.extend_from_slice(&data_len.to_le_bytes());
-    wav.extend_from_slice(pcm);
-    wav
+    Ok(wav_buf)
 }
 
 /// Transcribe audio bytes using Gemini multimodal API. Returns text.
@@ -122,17 +133,13 @@ pub async fn transcribe_audio(audio_bytes: &[u8], api_key: &str) -> Result<Strin
     Ok(text)
 }
 
-/// Shorthand: record + transcribe, return text.
-pub async fn record_and_transcribe(api_key: &str, duration_secs: u32) -> Result<String> {
-    use colored::Colorize;
-    println!("  {} Listening...", "🎙️".bright_red());
+/// Record + transcribe, return text. For JARVIS loop.
+pub async fn listen_and_transcribe(api_key: &str, duration_secs: u32) -> Result<String> {
     let audio = record_audio(duration_secs)?;
-    let text = transcribe_audio(&audio, api_key).await?;
-    println!("  {} {}", "🗣️".cyan(), text.bright_white());
-    Ok(text)
+    transcribe_audio(&audio, api_key).await
 }
 
-/// Full voice prompt flow for --voice flag.
+/// One-shot voice prompt for --voice flag.
 pub async fn voice_prompt(api_key: &str, duration_secs: u32) -> Result<String> {
     use colored::Colorize;
     println!();
