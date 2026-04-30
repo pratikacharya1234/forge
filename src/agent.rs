@@ -363,11 +363,11 @@ pub async fn run_ci_agent(client: &BackendClient, config: &Config, prompt: &str)
 /// Used by the voice conversation loop. No tool execution, just chat.
 pub async fn run_jarvis_query(config: &Config, prompt: &str) -> Result<String> {
     let client = BackendClient::new(config)?;
-    let mcp = Arc::new(McpRegistry::startup(&config.mcp_servers).await);
-    let integrations = Arc::new(IntegrationRegistry::from_config(&config.integrations));
-    let mut cost_tracker = CostTracker::new(&config.model, config.daily_budget_usd);
+    let _mcp = Arc::new(McpRegistry::startup(&config.mcp_servers).await);
+    let _integrations = Arc::new(IntegrationRegistry::from_config(&config.integrations));
+    let _cost_tracker = CostTracker::new(&config.model, config.daily_budget_usd);
     let parts = vec![Part::text(prompt)];
-    let mut history = vec![Content { role: "user".to_string(), parts }];
+    let history = vec![Content { role: "user".to_string(), parts }];
     let sys = system_prompt(config);
 
     let request = GenerateContentRequest {
