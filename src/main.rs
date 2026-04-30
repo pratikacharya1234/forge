@@ -23,7 +23,7 @@ mod ui;
 mod packer;
 mod ci_runner;
 mod voice;
-mod jarvis;
+mod ember;
 
 #[cfg(test)]
 mod test_harness;
@@ -74,9 +74,9 @@ struct Args {
     #[clap(long)]
     voice: bool,
 
-    /// JARVIS mode — real-time voice conversation with TTS responses.
+    /// EMBER — real-time voice AI with Google TTS responses.
     #[clap(long)]
-    jarvis: bool,
+    ember: bool,
 
     #[clap(long)]
     pipeline: Option<String>,
@@ -222,9 +222,9 @@ async fn main() -> Result<()> {
         api_base: args.api_base,
     };
 
-    // JARVIS mode — real-time voice conversation loop
-    if args.jarvis {
-        jarvis::jarvis_loop(&config).await?;
+    // EMBER mode — real-time voice conversation loop
+    if args.ember {
+        ember::ember_loop(&config).await?;
         return Ok(());
     }
 
@@ -252,8 +252,8 @@ async fn main() -> Result<()> {
 
     if let Some(prompt) = args.prompt {
         agent::run_once(&config, &prompt, args.screenshot.as_deref()).await?;
-    } else if jarvis::mic_available() {
-        let want_text = jarvis::jarvis_loop(&config).await?;
+    } else if ember::mic_available() {
+        let want_text = ember::ember_loop(&config).await?;
         if want_text {
             agent::run_interactive(&config).await?;
         }
