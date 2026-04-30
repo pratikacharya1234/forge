@@ -22,6 +22,7 @@ mod tools;
 mod ui;
 mod packer;
 mod ci_runner;
+mod voice;
 
 #[cfg(test)]
 mod test_harness;
@@ -67,6 +68,10 @@ struct Args {
     api_base: Option<String>,
     #[clap(long)]
     ci: bool,
+
+    /// Voice input — record mic, transcribe via Gemini, run as prompt.
+    #[clap(long)]
+    voice: bool,
 
     #[clap(long)]
     pipeline: Option<String>,
@@ -211,6 +216,13 @@ async fn main() -> Result<()> {
         explain_before_execute: args.explain || file_cfg.explain_before_execute,
         api_base: args.api_base,
     };
+
+    // Voice mode — record mic, transcribe, run as prompt
+    if args.voice {
+        let text = voice::voice_prompt(&config.api_key, 10).await?;
+        agent::run_once(&config, &text, None).await?;
+        return Ok(());
+    }
 
     // CI headless mode — run prompt, output JSON, exit
     if args.ci {
