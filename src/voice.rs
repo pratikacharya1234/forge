@@ -105,10 +105,14 @@ pub async fn transcribe_audio(audio_bytes: &[u8], api_key: &str) -> Result<Strin
     let body = serde_json::json!({
         "contents": [{
             "parts": [
-                { "text": "Transcribe this audio to text. Return ONLY the transcribed words." },
+                { "text": "Transcribe this audio to text. Return ONLY the transcribed words. No explanation. No analysis. Just the words." },
                 { "inlineData": { "mimeType": "audio/wav", "data": audio_b64 } }
             ]
-        }]
+        }],
+        "generationConfig": {
+            "temperature": 0.0,
+            "maxOutputTokens": 256
+        }
     });
 
     let url = format!(
@@ -127,6 +131,13 @@ pub async fn transcribe_audio(audio_bytes: &[u8], api_key: &str) -> Result<Strin
     let parsed: serde_json::Value = serde_json::from_str(&body_text)?;
     let text = parsed["candidates"][0]["content"]["parts"][0]["text"]
         .as_str().unwrap_or("").trim().to_string();
+
+    // Filter out model rambling — if response is way too long or contains "thinking" patterns
+    if text.len() > 500 || text.contains("1.") && text.contains("2.") && text.contains("3.") {
+        // Model output reasoning instead of transcribing — try to extract just the words
+        anyhow::bail!("Model rambled — retrying");
+    }
+
     if text.is_empty() {
         anyhow::bail!("No transcription — speak more clearly");
     }

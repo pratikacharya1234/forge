@@ -11,7 +11,8 @@ pub fn mic_available() -> bool {
     crate::voice::check_audio()
 }
 
-pub async fn jarvis_loop(config: &crate::config::Config) -> Result<()> {
+pub async fn jarvis_loop(config: &crate::config::Config) -> Result<bool> {
+    // Returns true if user wants to fall through to text mode
     // ── Greeting ───────────────────────────────────────────────────────────
     println!();
     println!("  ╔══════════════════════════════════════════════╗");
@@ -23,10 +24,26 @@ pub async fn jarvis_loop(config: &crate::config::Config) -> Result<()> {
     println!();
 
     let has_mic = crate::voice::check_audio();
+
     if !has_mic {
-        println!("  {} No mic detected. Run: forge-cli", "⚠️ ".yellow());
+        println!("  {} No mic detected. Starting text mode.", "⚠️ ".yellow());
         println!();
-        return Ok(());
+    } else {
+        // Ask: voice or text?
+        println!("  {} Mic detected — Voice mode or Text mode?", "🎤".bright_red());
+        println!("  [1] Voice (JARVIS)  |  [2] Text (terminal)  |  [Enter] = Voice");
+        print!("  > ");
+        let _ = std::io::stdout().flush();
+        let mut choice = String::new();
+        let _ = std::io::stdin().read_line(&mut choice);
+        if choice.trim() == "2" {
+            return Ok(true); //
+        }
+        println!();
+    }
+
+    if !has_mic {
+        return Ok(true); //
     }
 
     // Greet the user
@@ -34,8 +51,8 @@ pub async fn jarvis_loop(config: &crate::config::Config) -> Result<()> {
         "Hello. I'm FORGE, your AI assistant. I see you're in the {} project. How can I help?",
         get_project_name()
     );
+    println!("  {} {}", "🔊".bright_cyan(), greeting.bright_white());
     speak(&greeting);
-    println!("  {} {}", "🧠".bright_blue(), greeting.bright_white());
     println!();
     println!("  {} Speak now — I'm listening...", "🎤".bright_red());
     println!("  {} Say \"quit\" or \"exit\" to stop | Hold for 4 seconds to speak", "  ".dimmed());
@@ -53,15 +70,21 @@ pub async fn jarvis_loop(config: &crate::config::Config) -> Result<()> {
     } else { Vec::new() };
 
     // ── Voice loop ─────────────────────────────────────────────────────────
+    let mut silence_count = 0u32;
     loop {
-        print!("  {} ", "🎙️".bright_red());
-        let _ = std::io::stdout().flush();
-
-        // Listen for speech — 5 second recording window
-        let user_message = match crate::voice::listen_and_transcribe(&config.api_key, 5).await {
-            Ok(text) => text,
+        // Listen — 4 second window
+        let user_message = match crate::voice::listen_and_transcribe(&config.api_key, 4).await {
+            Ok(text) => {
+                silence_count = 0;
+                text
+            }
             Err(_) => {
-                // Silently retry
+                silence_count += 1;
+                // Only print "listening" indicator every 5 failures
+                if silence_count % 5 == 0 {
+                    print!("  {} Still listening...\r", "🎙️".dimmed());
+                    let _ = std::io::stdout().flush();
+                }
                 continue;
             }
         };
@@ -77,7 +100,7 @@ pub async fn jarvis_loop(config: &crate::config::Config) -> Result<()> {
             speak(farewell);
             println!("  {} {}", "👋".cyan(), farewell.bright_white());
             save_memory(&mem_path, &memory);
-            return Ok(());
+            return Ok(false);
         }
 
         memory.push(format!("User: {}", user_message));
@@ -125,9 +148,10 @@ fn speak(text: &str) {
     let clean = text.replace('`', "").replace('*', "").replace('#', "")
         .replace("```", "").replace("___", "").trim().to_string();
     if clean.is_empty() { return; }
+    // Block until spoken — uses output() instead of spawn()
     let _ = std::process::Command::new("spd-say")
         .args(["-e", "-r", "0", &clean])
-        .spawn();
+        .output();
 }
 
 fn save_memory(path: &std::path::Path, memory: &[String]) {
