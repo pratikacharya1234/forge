@@ -17,6 +17,7 @@ use crate::orchestrator;
 use crate::token_counter::CostTracker;
 use crate::tools::{self, ToolContext};
 use crate::{audit, project, security, session, snapshot, ui};
+use crate::ui::nullvoid as nv;
 
 // ── System prompt ──────────────────────────────────────────────────────────────
 
@@ -403,7 +404,7 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
     let banner_tool_count = tools::core_tool_count();
     let banner_int_count  = integrations.tool_count();
     let banner_ctx        = config::context_window(&config.model);
-    ui::print_banner(config.grounding, config.thinking, config.auto_apply, banner_tool_count, banner_int_count, banner_ctx);
+    nv::print_banner(banner_tool_count, banner_ctx, &config.model);
 
     if mcp.server_count() > 0 { mcp.print_status(); println!(); }
     if integrations.service_count() > 0 { integrations.print_status(); println!(); }
@@ -438,7 +439,7 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
     let _ = rl.load_history(&history_path);
 
     loop {
-        let prompt_str = ui::user_prompt_str();
+        let prompt_str = nv::input_prompt_str();
 
         let line = match rl.readline(&prompt_str) {
             Ok(l) => l,
@@ -448,7 +449,7 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                 continue;
             }
             Err(rustyline::error::ReadlineError::Eof) => { println!(); break; }
-            Err(e) => { ui::print_error(&e.to_string()); break; }
+            Err(e) => { nv::print_error(&e.to_string()); break; }
         };
 
         let line = line.trim().to_string();
@@ -877,10 +878,10 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                     match BackendClient::new(&active_cfg) {
                         Ok(active_client) => {
                             if let Err(e) = test_fix_loop(&active_client, &mut history, &active_cfg, test_cmd, max_cycles, Some(mcp.clone()), Some(integrations.clone()), &mut cost_tracker).await {
-                                ui::print_error(&e.to_string());
+                                nv::print_error(&e.to_string());
                             }
                         }
-                        Err(e) => ui::print_error(&e.to_string()),
+                        Err(e) => nv::print_error(&e.to_string()),
                     }
                 }
 
@@ -903,7 +904,7 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                                     parts: vec![Part::text(&report)],
                                 });
                             }
-                            Err(e) => ui::print_error(&format!("Task orchestration failed: {}", e)),
+                            Err(e) => nv::print_error(&format!("Task orchestration failed: {}", e)),
                         }
                     }
                 }
@@ -975,7 +976,7 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                     let ctx  = ToolContext { stream_output: false, auto_apply, mcp: Some(mcp.clone()), integrations: Some(integrations.clone()) };
                     let result = tools::execute_tool("git_snapshot", &args, &ctx).await;
                     if result.is_error {
-                        ui::print_tool_result_err(&result.output);
+                        nv::print_tool_result(false, &result.output);
                     } else {
                         println!("{} {}", "[OK]".green(), result.output.dimmed());
                     }
@@ -993,9 +994,9 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                         }
                         Ok(o) => {
                             let err = String::from_utf8_lossy(&o.stderr).trim().to_string();
-                            ui::print_error(&format!("git stash pop failed: {}", err));
+                            nv::print_error(&format!("git stash pop failed: {}", err));
                         }
-                        Err(e) => ui::print_error(&format!("git not available: {}", e)),
+                        Err(e) => nv::print_error(&format!("git not available: {}", e)),
                     }
                 }
 
@@ -1008,7 +1009,7 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                                     .unwrap_or_else(|_| dir.to_string());
                                 println!("{} {}", "cwd:".dimmed(), cwd.cyan());
                             }
-                            Err(e) => ui::print_error(&format!("cd: {}", e)),
+                            Err(e) => nv::print_error(&format!("cd: {}", e)),
                         }
                     } else {
                         println!("{}", std::env::current_dir()
@@ -1038,7 +1039,7 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                                 "[OK]".green(), proj.file_count, proj.token_estimate
                             );
                         }
-                        Err(e) => ui::print_error(&e.to_string()),
+                        Err(e) => nv::print_error(&e.to_string()),
                     }
                 }
 
@@ -1066,7 +1067,7 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                             });
                             println!("{} Loaded {} files (~{} tokens).", "[OK]".green(), proj.file_count, proj.token_estimate);
                         }
-                        Err(e) => ui::print_error(&format!("clone failed: {}", e)),
+                        Err(e) => nv::print_error(&format!("clone failed: {}", e)),
                     }
                 }
 
@@ -1083,7 +1084,7 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                         ..Config::default()
                     };
                     if let Err(e) = security::sweep(&sec_cfg).await {
-                        ui::print_error(&e.to_string());
+                        nv::print_error(&e.to_string());
                     }
                 }
 
@@ -1105,13 +1106,13 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                             match BackendClient::new(&active_cfg) {
                                 Ok(active_client) => {
                                     if let Err(e) = agentic_loop(&active_client, &mut history, &active_cfg, explain_exec, Some(mcp.clone()), Some(integrations.clone()), &mut cost_tracker).await {
-                                        ui::print_error(&e.to_string());
+                                        nv::print_error(&e.to_string());
                                     }
                                 }
-                                Err(e) => ui::print_error(&e.to_string()),
+                                Err(e) => nv::print_error(&e.to_string()),
                             }
                         }
-                        Err(e) => ui::print_error(&format!("Cannot load image '{}': {}", path, e)),
+                        Err(e) => nv::print_error(&format!("Cannot load image '{}': {}", path, e)),
                     }
                 }
 
@@ -1130,7 +1131,7 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                             session_tokens = 0;
                             println!("{} Compacted ({} chars).", "[OK]".green(), summary.len());
                         }
-                        Err(e) => ui::print_error(&format!("Compact failed: {}", e)),
+                        Err(e) => nv::print_error(&format!("Compact failed: {}", e)),
                     }
                 }
 
@@ -1192,7 +1193,7 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                     let filename = parts.get(1).map(|s| s.trim()).unwrap_or("forge-session.md");
                     match save_session(filename, &history) {
                         Ok(_)  => println!("{} '{}'", "Saved session to".green(), filename),
-                        Err(e) => ui::print_error(&format!("Save failed: {}", e)),
+                        Err(e) => nv::print_error(&format!("Save failed: {}", e)),
                     }
                 }
 
@@ -1223,7 +1224,7 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
         let active_cfg = active_config(config, &effective_model, grounding, thinking, thinking_budget, auto_apply);
         let active_client = match BackendClient::new(&active_cfg) {
             Ok(c) => c,
-            Err(e) => { ui::print_error(&e.to_string()); continue; }
+            Err(e) => { nv::print_error(&e.to_string()); continue; }
         };
 
         match agentic_loop(&active_client, &mut history, &active_cfg, explain_exec, Some(mcp.clone()), Some(integrations.clone()), &mut cost_tracker).await {
@@ -1272,7 +1273,7 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                     println!("  {} session tokens: {}", "dbg".dimmed(), session_tokens);
                 }
             }
-            Err(e) => ui::print_error(&e.to_string()),
+            Err(e) => nv::print_error(&e.to_string()),
         }
     }
 
@@ -1360,7 +1361,7 @@ async fn agentic_loop(
             iterations = 0;
         }
 
-        ui::print_thinking_with_model(&config.model);
+        nv::print_thinking(&config.model);
 
         let request = GenerateContentRequest {
             contents:           history.clone(),
@@ -1541,7 +1542,7 @@ async fn agentic_loop(
             let t  = usage.total_token_count.unwrap_or(0);
             let th = usage.thoughts_token_count.unwrap_or(0);
             if t > 0 {
-                ui::print_token_usage(p, c, t, th);
+                nv::print_token_stats(p, c, t, cost_tracker.session_cost(), total_prompt_tokens/1000, 0, cost_tracker.turn_count as u32);
                 total_prompt_tokens = total_prompt_tokens.saturating_add(t);
                 cost_tracker.record_usage(p, c, th);
 
@@ -1644,14 +1645,14 @@ async fn agentic_loop(
 
         for handle in handles {
             let (name, args, result) = handle.await?;
-            ui::print_tool_call(&name, &fmt_args(&args));
+            nv::print_tool_call(&name, &fmt_args(&args));
 
             if result.was_streamed {
-                if result.is_error { ui::print_tool_result_err("(see output above)"); }
+                if result.is_error { nv::print_tool_result(false, "(see output above)"); }
             } else if result.is_error {
-                ui::print_tool_result_err(&result.output);
+                nv::print_tool_result(false, &result.output);
             } else {
-                ui::print_tool_result_ok(&result.output);
+                nv::print_tool_result(true, &result.output);
             }
 
             let tool_name = name.clone();
@@ -1700,7 +1701,7 @@ async fn auto_pr(description: &str) {
         .output().await;
 
     if check.map(|o| !o.status.success()).unwrap_or(true) {
-        ui::print_error("Not inside a git repository.");
+        nv::print_error("Not inside a git repository.");
         return;
     }
 
@@ -1720,7 +1721,7 @@ async fn auto_pr(description: &str) {
     if let Ok(p) = &push {
         if !p.status.success() {
             let err = String::from_utf8_lossy(&p.stderr);
-            ui::print_error(&format!("git push failed: {}", err.trim()));
+            nv::print_error(&format!("git push failed: {}", err.trim()));
             return;
         }
     }
@@ -1743,10 +1744,10 @@ async fn auto_pr(description: &str) {
         }
         Ok(o) => {
             let err = String::from_utf8_lossy(&o.stderr);
-            ui::print_error(&format!("gh pr create failed: {}", err.trim()));
+            nv::print_error(&format!("gh pr create failed: {}", err.trim()));
         }
         Err(e) => {
-            ui::print_error(&format!("gh CLI not found ({}). Install: https://cli.github.com", e));
+            nv::print_error(&format!("gh CLI not found ({}). Install: https://cli.github.com", e));
         }
     }
 }
