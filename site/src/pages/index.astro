@@ -3,6 +3,15 @@ import Layout from '../layouts/Layout.astro';
 import ForgeCanvas from '../components/3d/ForgeCanvas.svelte';
 import Terminal from '../components/ui/Terminal.svelte';
 import Analytics from '../components/ui/Analytics.svelte';
+import Nav from '../components/Nav.svelte';
+import Hero from '../components/Hero.astro';
+import Stats from '../components/Stats.svelte';
+import Showcase from '../components/Showcase.svelte';
+import Features from '../components/Features.astro';
+import HowToUse from '../components/HowToUse.svelte';
+import Download from '../components/Download.astro';
+import Community from '../components/Community.astro';
+import VercelAnalytics from '@vercel/analytics/astro'
 ---
 
 <Layout title="FORGE - The Multi-Model AI Coding Agent">
@@ -12,6 +21,7 @@ import Analytics from '../components/ui/Analytics.svelte';
 			<ForgeCanvas client:load />
 		</div>
 
+<!-- merged -->
 		<!-- Hero Content -->
 		<div class="relative z-10 container mx-auto px-6 text-center">
 			<h1 class="text-6xl md:text-8xl font-bold tracking-tighter mb-6 bg-clip-text text-transparent bg-gradient-to-b from-white to-white/40">
@@ -70,4 +80,15 @@ import Analytics from '../components/ui/Analytics.svelte';
 
 	<Analytics client:load />
 </Layout>
+<!-- remote content integrated -->
+		<Hero />
+    <Stats client:load />
+    <Showcase client:load />
+    <Features />
+    <HowToUse client:load />
+    <Download />
+    <Community />
+    <Analytics/>
+	</main>
+<!-- end merge -->
 </Layout>
