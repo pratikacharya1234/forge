@@ -24,7 +24,9 @@ mod packer;
 mod ci_runner;
 mod domain_knowledge;
 mod domain_bootstrap;
+#[cfg(feature = "ember")]
 mod voice;
+#[cfg(feature = "ember")]
 mod ember;
 
 #[cfg(test)]

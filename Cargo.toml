@@ -9,6 +9,10 @@ authors = ["pratikacharya1234"]
 name = "forge-cli"
 path = "src/main.rs"
 
+[features]
+default = []
+ember = ["cpal", "hound"]
+
 [dependencies]
 tokio        = { version = "1",    features = ["full"] }
 reqwest      = { version = "0.11", features = ["json", "stream"] }
@@ -28,5 +32,5 @@ toml         = "0.8"
 similar      = "2"
 uuid         = { version = "1", features = ["v4"] }
 chrono = "0.4.38"
-cpal = "0.15"
-hound = "3.5"
+cpal = { version = "0.15", optional = true }
+hound = { version = "3.5", optional = true }
