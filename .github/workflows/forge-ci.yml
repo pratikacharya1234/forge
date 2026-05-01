@@ -10,4 +10,4 @@ jobs:
       - name: Build FORGE
         run: cargo build --release
       - name: Run FORGE CI
-        run: ./target/release/forge-cli --ci --prompt "fix any bugs or warnings" --json
+        run: ./target/release/forge-cli --ci --prompt "fix any bugs or warnings"
