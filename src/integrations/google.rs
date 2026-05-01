@@ -227,7 +227,7 @@ impl GDriveIntegration {
         let name = file["name"].as_str().unwrap_or("(unnamed)");
         let id = file["id"].as_str().unwrap_or("?");
         let mime = file["mimeType"].as_str().unwrap_or("?");
-        let size = file["size"].as_str().map(|s| format_size(s)).unwrap_or_else(|| "?".to_string());
+        let size = file["size"].as_str().map(format_size).unwrap_or_else(|| "?".to_string());
         let modified = file["modifiedTime"].as_str().unwrap_or("?");
         let is_folder = mime == "application/vnd.google-apps.folder";
         let kind = if is_folder { "[DIR]" } else { "[FILE]" };
@@ -378,7 +378,7 @@ impl IntegrationService for GDriveIntegration {
                     Ok(file) => {
                         let name = file["name"].as_str().unwrap_or("?");
                         let mime = file["mimeType"].as_str().unwrap_or("?");
-                        let size = file["size"].as_str().map(|s| format_size(s)).unwrap_or_else(|| "unknown".to_string());
+                        let size = file["size"].as_str().map(format_size).unwrap_or_else(|| "unknown".to_string());
                         let created = file["createdTime"].as_str().unwrap_or("?");
                         let modified = file["modifiedTime"].as_str().unwrap_or("?");
                         let desc = file["description"].as_str().unwrap_or("");

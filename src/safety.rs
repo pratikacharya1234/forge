@@ -23,14 +23,13 @@ pub struct SafetyPolicy {
 }
 
 #[derive(Clone, Debug)]
+#[derive(Default)]
 pub enum RiskLevelOverride {
+    #[default]
     Unset,
     Override(RiskLevel),
 }
 
-impl Default for RiskLevelOverride {
-    fn default() -> Self { RiskLevelOverride::Unset }
-}
 
 static SAFETY_POLICY: OnceLock<Mutex<SafetyPolicy>> = OnceLock::new();
 

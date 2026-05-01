@@ -5,7 +5,7 @@ set -euo pipefail
 
 echo ""
 echo "  ╔══════════════════════════════════════════════════╗"
-echo "  ║        🔨 FORGE v0.0.1 — Live Demo              ║"
+echo "  ║        ◈ FORGE v0.0.2 — Live Demo              ║"
 echo "  ╚══════════════════════════════════════════════════╝"
 echo ""
 
@@ -23,8 +23,8 @@ if [ -z "${GEMINI_API_KEY:-}" ] && [ -z "${FORGE_API_KEY:-}" ]; then
 fi
 
 FORGE_VERSION=$(forge-cli --version 2>&1 | head -1)
-echo "  [✓] FORGE ${FORGE_VERSION} ready"
-echo "  [✓] API key configured"
+echo "  [⊕] FORGE ${FORGE_VERSION} ready"
+echo "  [⊕] API key configured"
 echo ""
 echo "  ─────────────────────────────────────────────────"
 echo "  Demo 1: Quick code fix"

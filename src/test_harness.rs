@@ -1,4 +1,4 @@
-/// FORGE v0.0.1 — Integration & Unit Test Suite
+/// FORGE v0.0.2 — Integration & Unit Test Suite
 ///
 /// Tests cover: provider detection, type conversion, safety classification,
 /// context windows, token counting, dependency ordering, and backend

@@ -25,7 +25,7 @@ const SYSTEM_PROMPT_BASE: &str = r#"You are FORGE. You are the most capable AI c
 
 ## Your Identity
 
-You run on FORGE v0.0.1 — an open-source, multi-model terminal coding agent built in Rust. You work with Gemini, Claude, and GPT. You are not tied to any single AI provider. You have {tool_count} built-in tools plus native integrations for GitHub, Discord, Gmail, and Google Drive. You have a 1M token context window — the largest in the industry. Use it.
+You run on FORGE v0.0.2 — an open-source, multi-model terminal coding agent built in Rust. You work with Gemini, Claude, and GPT. You are not tied to any single AI provider. You have {tool_count} built-in tools plus native integrations for GitHub, Discord, Gmail, and Google Drive. You have a 1M token context window — the largest in the industry. Use it.
 
 ## How You Think
 
@@ -123,6 +123,7 @@ After every change, mentally verify:
 - The working directory is shown below. All relative paths are relative to cwd.
 
 {model_hint}
+{domain_context}
 {project_context}
 {memory_context}
 {dna_context}
@@ -188,6 +189,9 @@ fn load_memory_context() -> String {
     String::new()
 }
 
+/// Static domain context — set once during interactive startup, read by system_prompt.
+static DOMAIN_CTX: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+
 fn load_project_context() -> String {
     // Look for .forge/project.md in current dir
     let path = std::path::Path::new(".forge/project.md");
@@ -222,6 +226,7 @@ fn system_prompt(config: &Config) -> String {
 
     SYSTEM_PROMPT_BASE
         .replace("{model_hint}", &model_hint(config))
+        .replace("{domain_context}", DOMAIN_CTX.get().map(|s| s.as_str()).unwrap_or(""))
         .replace("{project_context}", &load_project_context())
         .replace("{memory_context}", &load_memory_context())
         .replace("{tool_count}", &tool_count.to_string())
@@ -242,7 +247,7 @@ fn build_tools(grounding: bool, mcp: Option<&McpRegistry>, integrations: Option<
         tools.push(serde_json::json!({ "googleSearch": {} }));
     }
     // Extend with integration tools if available
-    if let Some(ref ireg) = integrations {
+    if let Some(ireg) = integrations {
         let idecls = ireg.function_declarations();
         if !idecls.is_empty() {
             if let Some(first) = tools.first_mut() {
@@ -259,7 +264,7 @@ fn build_tools(grounding: bool, mcp: Option<&McpRegistry>, integrations: Option<
         }
     }
     // Extend with MCP tools if available
-    if let Some(ref mcp) = mcp {
+    if let Some(mcp) = mcp {
         let mcp_decls = mcp.function_declarations();
         if !mcp_decls.is_empty() {
             if let Some(first) = tools.first_mut() {
@@ -327,7 +332,7 @@ pub async fn run_ci_agent(client: &BackendClient, config: &Config, prompt: &str)
     let parts = vec![Part::text(prompt)];
     let mut history = vec![Content { role: "user".to_string(), parts }];
 
-    let total_tokens = agentic_loop(&client, &mut history, config, false, Some(mcp), Some(integrations), &mut cost_tracker).await?;
+    let total_tokens = agentic_loop(client, &mut history, config, false, Some(mcp), Some(integrations), &mut cost_tracker).await?;
 
     // Detect changed/created files from the last git diff
     let mut files_changed: Vec<String> = Vec::new();
@@ -362,6 +367,7 @@ pub async fn run_ci_agent(client: &BackendClient, config: &Config, prompt: &str)
 }
 
 /// JARVIS voice query — runs a single prompt and returns just the text response.
+    #[allow(dead_code)]
 /// Used by the voice conversation loop. No tool execution, just chat.
 pub async fn run_jarvis_query(config: &Config, prompt: &str) -> Result<String> {
     let client = BackendClient::new(config)?;
@@ -401,10 +407,7 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
     let mcp = Arc::new(McpRegistry::startup(&config.mcp_servers).await);
     let integrations = Arc::new(IntegrationRegistry::from_config(&config.integrations));
 
-    let banner_tool_count = tools::core_tool_count();
-    let banner_int_count  = integrations.tool_count();
-    let banner_ctx        = config::context_window(&config.model);
-    nv::print_banner(banner_tool_count, banner_ctx, &config.model);
+    nv::print_banner();
 
     if mcp.server_count() > 0 { mcp.print_status(); println!(); }
     if integrations.service_count() > 0 { integrations.print_status(); println!(); }
@@ -423,13 +426,18 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
 
     // Announce project.md if found
     if std::path::Path::new(".forge/project.md").exists() {
-        println!(
-            "  {} Loaded project instructions from {}",
-            "[OK]".green(),
-            ".forge/project.md".cyan()
-        );
-        println!();
+        nv::print_project_loaded(".forge/project.md");
     }
+
+    // ── Domain bootstrap — select domain + real-time web search ─────────
+    let (domain, search_results) = if let Some(ref preset) = config.domain {
+        let d = crate::domain_bootstrap::domain_by_name(preset);
+        (d, Vec::new())
+    } else {
+        crate::domain_bootstrap::select_domain().await
+    };
+    let domain_ctx = crate::domain_bootstrap::domain_context(&domain, &search_results);
+    let _ = DOMAIN_CTX.set(domain_ctx);
 
     let history_path = dirs::home_dir()
         .map(|h| h.join(".forge-history"))
@@ -455,6 +463,9 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
         let line = line.trim().to_string();
         if line.is_empty() { continue; }
         let _ = rl.add_history_entry(&line);
+
+        // Echo user message — nullvoid style
+        nv::print_user_echo(&line);
 
         // ── Slash commands ─────────────────────────────────────────────────────
         if line.starts_with('/') {
@@ -897,7 +908,7 @@ pub async fn run_interactive(config: &Config) -> Result<()> {
                                 // Add the task result to conversation history
                                 history.push(Content {
                                     role: "user".to_string(),
-                                    parts: vec![Part::text(&format!("Task completed: {}", task_req))],
+                                    parts: vec![Part::text(format!("Task completed: {}", task_req))],
                                 });
                                 history.push(Content {
                                     role: "model".to_string(),
@@ -1306,6 +1317,7 @@ fn active_config(
         openai_api_key: base.openai_api_key.clone(),
         explain_before_execute: base.explain_before_execute,
         api_base: None,
+            domain: None,
     }
 }
 
@@ -1378,16 +1390,6 @@ async fn agentic_loop(
 
         let mut on_thought = |chunk: &str| {
             if !thought_active.get() {
-                println!();
-                let short_model = config.model.trim_start_matches("models/")
-                    .split('-')
-                    .filter(|s| !s.is_empty())
-                    .take(3)
-                    .collect::<Vec<_>>()
-                    .join("-");
-                println!("  ╭{} {}", "─".repeat(2), "─".repeat(56));
-                println!("  │ {} REASONING {}", "🧠".bright_yellow(), short_model.bright_blue().bold());
-                println!("  ├{} {}", "─".repeat(2), "─".repeat(56));
                 thought_active.set(true);
             }
             thought_buf.borrow_mut().push_str(chunk);
@@ -1401,7 +1403,7 @@ async fn agentic_loop(
                     let mut current = String::new();
                     for w in words {
                         if current.len() + w.len() + 1 > 58 {
-                            println!("  │ {}", current.yellow());
+                            nv::print_thinking_line(&current);
                             current = w.to_string();
                         } else {
                             if !current.is_empty() { current.push(' '); }
@@ -1409,10 +1411,10 @@ async fn agentic_loop(
                         }
                     }
                     if !current.is_empty() {
-                        println!("  │ {}", current.yellow());
+                        nv::print_thinking_line(&current);
                     }
                 } else {
-                    println!("  │ {}", line.yellow());
+                    nv::print_thinking_line(&line);
                 }
             }
             let _ = std::io::stdout().flush();
@@ -1422,11 +1424,10 @@ async fn agentic_loop(
             if thought_active.get() {
                 let rem = thought_buf.borrow().trim_end().to_string();
                 if !rem.is_empty() {
-                    println!("  │ {}", rem.yellow());
+                    nv::print_thinking_line(&rem);
                 }
                 thought_buf.borrow_mut().clear();
-                println!("  ╰{} {}", "─".repeat(2), "─".repeat(56));
-                println!("    {}", "✅  Reasoning complete".green());
+                nv::print_thinking_close();
                 thought_active.set(false);
             }
             if first_text.get() { first_text.set(false); }
@@ -1498,9 +1499,9 @@ async fn agentic_loop(
         if thought_active.get() {
             let rem = thought_buf.borrow().trim_end().to_string();
             if !rem.is_empty() {
-                println!("  {} {}", "│".dimmed(), rem.dimmed().yellow());
+                nv::print_thinking_line(&rem);
             }
-            println!("  {} {}", "[OK]".green().dimmed(), "Reasoning complete.".dimmed());
+            nv::print_thinking_close();
         }
         let first_text = first_text.get();
 
@@ -1530,8 +1531,9 @@ async fn agentic_loop(
         history.push(content);
 
         if first_text && !text_chunks.is_empty() {
-            ui::print_assistant_prefix();
-            println!("{}", text_chunks.join("\n"));
+            let body = text_chunks.join("\n");
+            nv::print_response_header();
+            nv::print_response_body(&body);
         } else if !first_text {
             println!();
         }
@@ -1586,12 +1588,12 @@ async fn agentic_loop(
                 .join("-");
             println!();
             println!("  ╔══════════════════════════════════════╗");
-            println!("  ║  {} {} {} ║", "📋 PLAN".cyan().bold(), "—".dimmed(), short_model.bright_blue());
+            println!("  ║  {} {} {} ║", "◈ PLAN".cyan().bold(), "—".dimmed(), short_model.bright_blue());
             println!("  ╠══════════════════════════════════════╣");
             for (i, fc) in function_calls.iter().enumerate() {
                 let args_summary = fmt_args_compact(&fc.args);
                 let num = i + 1;
-                println!("  ║  {} {}  {}", num.to_string().cyan(), fc.name.yellow().bold(), " ".repeat(1));
+                println!("  ║  {} {}  {}", num.to_string().cyan(), fc.name.yellow().bold(), " ".to_string());
                 if !args_summary.is_empty() {
                     let truncated = if args_summary.len() > 30 {
                         format!("{}…", &args_summary[..27])
@@ -1603,12 +1605,12 @@ async fn agentic_loop(
                 println!("  ║     {}", format!("╰─ {}", fc.name).dimmed());
             }
             println!("  ╚══════════════════════════════════════╝");
-            print!("  {} Execute? [Y/n] ", "⚡".yellow());
+            print!("  {} Execute? [Y/n] ", "⎔".yellow());
             let _ = std::io::stdout().flush();
             let mut ans = String::new();
             let _ = std::io::stdin().read_line(&mut ans);
             if ans.trim().to_lowercase() == "n" {
-                println!("  {} Execution skipped.", "✗".dimmed());
+                println!("  {} Execution skipped.", "⊗".dimmed());
                 break;
             }
         }
@@ -1903,8 +1905,8 @@ fn auto_route_model(config: &Config, message: &str) -> (&'static str, &'static s
     };
 
     // Pick the best available model
-    let has_anthropic = config.anthropic_api_key.as_deref().map_or(false, |k| !k.is_empty());
-    let has_openai = config.openai_api_key.as_deref().map_or(false, |k| !k.is_empty());
+    let has_anthropic = config.anthropic_api_key.as_deref().is_some_and(|k| !k.is_empty());
+    let has_openai = config.openai_api_key.as_deref().is_some_and(|k| !k.is_empty());
 
     match complexity {
         "high" => {

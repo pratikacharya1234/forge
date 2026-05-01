@@ -266,7 +266,7 @@ impl McpServer {
             .with_context(|| format!("MCP initialize handshake failed for '{}'", name))?;
 
         // Ensure the server supports tools
-        if !init_result.capabilities.get("tools").and_then(|t| t.as_object()).is_some() {
+        if init_result.capabilities.get("tools").and_then(|t| t.as_object()).is_none() {
             eprintln!(
                 "  ~ MCP server '{}' has no tools capability",
                 name
@@ -429,10 +429,8 @@ impl McpRegistry {
 
         // Start servers in parallel
         let results: Vec<Option<McpServer>> = futures_util::future::join_all(concurrency).await;
-        for maybe_server in results {
-            if let Some(server) = maybe_server {
-                servers.push(server);
-            }
+        for server in results.into_iter().flatten() {
+            servers.push(server);
         }
 
         // Index all tools with server-name prefixed keys

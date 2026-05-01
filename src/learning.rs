@@ -278,7 +278,7 @@ fn analyze_error(error: &str, tool_name: &str) -> (String, String, String) {
                 "compilation".into());
         }
         return ("compilation error".into(),
-            format!("Always run the build command after code changes to catch errors early"),
+            "Always run the build command after code changes to catch errors early".to_string(),
             "compilation".into());
     }
 

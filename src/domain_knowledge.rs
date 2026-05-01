@@ -175,7 +175,7 @@ src/
 - Vector DB: LanceDB (local) or Pinecone/Qdrant (cloud)
 - Embeddings: sentence-transformers or OpenAI embeddings
 - Evaluation: lm-evaluation-harness, DeepEval
-- Data: 🤗 datasets, Ray Data (scale)
+- Data: HuggingFace datasets, Ray Data (scale)
 - Experiment tracking: W&B or MLflow
 - MLOps: Docker + FastAPI serving
 

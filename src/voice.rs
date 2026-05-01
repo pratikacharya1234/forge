@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // Pure Rust voice capture via cpal. No external commands needed.
 // Cross-platform mic recording → WAV encoding → Gemini transcription.
 use anyhow::{Context, Result};
@@ -154,12 +155,12 @@ pub async fn listen_and_transcribe(api_key: &str, duration_secs: u32) -> Result<
 pub async fn voice_prompt(api_key: &str, duration_secs: u32) -> Result<String> {
     use colored::Colorize;
     println!();
-    println!("  {} Recording... speak now ({}s)", "🎤".bright_red(), duration_secs);
+    println!("  {} Recording... speak now ({}s)", "◉".bright_red(), duration_secs);
     println!("  {}", "  (Press Ctrl+C to cancel)".dimmed());
     let audio = record_audio(duration_secs)?;
-    println!("  {} Recorded {:.1}KB — transcribing...", "✅".green(), audio.len() as f64 / 1024.0);
+    println!("  {} Recorded {:.1}KB — transcribing...", "⊕".green(), audio.len() as f64 / 1024.0);
     let text = transcribe_audio(&audio, api_key).await?;
-    println!("  {} You said: {}", "🗣️".cyan(), text.bright_white().bold());
+    println!("  {} You said: {}", "⊢".cyan(), text.bright_white().bold());
     println!();
     Ok(text)
 }

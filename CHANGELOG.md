@@ -2,16 +2,31 @@
 
 All notable changes to FORGE are documented in this file.
 
-## [0.0.2] — Unreleased
+## [0.0.2] — 2026-04-30
 
 ### Added
+- **Domain Bootstrap:** Interactive project-type selector (15 domains) with real-time DuckDuckGo web search. Shows latest web findings alongside embedded blueprint. Custom domain input option `[C]` for any domain. Visible spinner and elapsed time during search.
+- **15 embedded domain blueprints:** Mobile, Web, AI/ML, Deep Learning, Desktop, Hardware/IoT, Game Dev, DevOps, Data Engineering, Blockchain/Web3, Cybersecurity, CLI/Dev Tools, API/Backend, Scientific/HPC, General. Production-ready knowledge for each domain.
+- **NULLVOID Terminal Theme:** Complete visual overhaul — spectral ghost logo with 5-color gradient, protocol header, pipe-separated stats bar, Unicode geometric glyphs (zero emoji). Phantom-hacker aesthetic.
+- **Streaming thought rendering:** Nullvoid-styled reasoning blocks with line-by-line amber text streaming and box-drawn borders.
+- **Response blocks:** Box-drawn output panels with header/body formatting for all AI responses.
 - **Model auto-fallback:** Automatically switches to an alternative model when the current one hits rate limits, auth errors, or server failures. Falls back: same-provider → cross-provider (Gemini free tier preferred).
-- **Gemini free tier indicator:** Cost display now shows "FREE (Gemini tier)" when using Gemini models — no more "$0.0000" making you wonder if you're being charged.
-- **Free tier guide in README:** Prominent section explaining how FORGE is 100% free with Gemini's 1,500 req/day tier. Zero credit card. Zero subscription.
+- **Gemini free tier indicator:** Cost display now shows "FREE (Gemini tier)" when using Gemini models.
+- **Free tier guide in README:** Prominent section explaining how FORGE is 100% free with Gemini's 1,500 req/day tier.
 - **Demo script:** `demo.sh` — runs a live 2-minute FORGE demo showing code generation and testing.
+- **Branch protection:** Main branch protected from force pushes and deletions.
 
 ### Changed
-- Updated comparison table with "Free tier" row
+- **EMBER voice AI:** Disabled for v0.0.2 — under active development, shipping in v0.0.3. CLI flags `--ember` and `--voice` hidden. Voice modules preserved, ready to re-enable.
+- **Auto-detect notifications:** Now use nullvoid styling instead of raw stderr.
+- **User echo:** All user input echoed in nullvoid style before processing.
+- **All emoji purged:** Replaced with nullvoid Unicode glyphs (◈ ⎔ ⊗ ◉ ⊕ ⊢ ⊞ ⌬).
+- Updated comparison table with "Free tier" row.
+
+### Fixed
+- **BufWriter flush bug:** FORGE ghost logo now renders correctly — protocol header was stuck in buffer, breaking cursor-overlay alignment.
+- **Separator rendering:** Replaced `*` with `·` in protocol header to fix `©` glyph on some terminal fonts.
+- **NULLVOID::PROTOCOL visibility:** Header text brightened from MUTED (#3A4060) to TEXT (#8892B0) for readability on dark terminals.
 
 ## [0.0.1] — 2026-04-28
 

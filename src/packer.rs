@@ -79,8 +79,8 @@ pub fn pack_project(output: Option<&str>) -> Result<String> {
         buf.push_str("\n```\n\n");
     }
 
-    fs::write(&out_path, &buf)?;
-    let size = fs::metadata(&out_path)?.len();
+    fs::write(out_path, &buf)?;
+    let size = fs::metadata(out_path)?.len();
     Ok(format!("Packed project context → {} ({:.1}KB)", out_path, size as f64 / 1024.0))
 }
 

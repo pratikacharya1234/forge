@@ -25,6 +25,8 @@ pub struct Config {
     pub explain_before_execute: bool,
     #[allow(dead_code)]
     pub api_base: Option<String>,
+    /// Domain preset — skips interactive selector when set.
+    pub domain: Option<String>,
 }
 
 impl Default for Config {
@@ -46,6 +48,7 @@ impl Default for Config {
             openai_api_key: None,
             explain_before_execute: false,
             api_base: None,
+            domain: None,
         }
     }
 }

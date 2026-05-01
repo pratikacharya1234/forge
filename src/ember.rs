@@ -1,49 +1,33 @@
+#![allow(dead_code)]
 // EMBER — Lightweight real-time voice AI. Pure Rust.
 // Google Gemini for transcription + Google Cloud TTS for speech.
 // Local memory, zero keyboard, hands-free operation.
+//
+// No banner. No emoji. NULLVOID-clean.
+// Caller (main.rs) handles mode selection before we fire.
 
 use anyhow::Result;
 use base64::Engine;
-use colored::Colorize;
-use std::io::Write;
 
 /// Run EMBER voice assistant loop.
-pub async fn ember_loop(config: &crate::config::Config) -> Result<bool> {
-    println!();
-    println!("  ╔══════════════════════════════════════════════╗");
-    println!("  ║                                              ║");
-    println!("  ║         🔥  E M B E R   O N L I N E          ║");
-    println!("  ║                                              ║");
-    println!("  ║  Voice → Gemini 2.0 Flash → {}", model_line(config));
-    println!("  ╚══════════════════════════════════════════════╝");
-    println!();
-
+/// Assumes caller already confirmed voice mode — no mode selector here.
+pub async fn ember_loop(config: &crate::config::Config) -> Result<()> {
     let has_mic = crate::voice::check_audio();
-    
-    if has_mic {
-        println!("  {} Mic detected — Voice mode or Text mode?", "🎤".bright_red());
-        println!("  [1] Voice (EMBER)  |  [2] Text (terminal)  |  [Enter] = Voice");
-        print!("  > ");
-        let _ = std::io::stdout().flush();
-        let mut choice = String::new();
-        let _ = std::io::stdin().read_line(&mut choice);
-        if choice.trim() == "2" { return Ok(true); }
-        println!();
-    } else {
-        println!("  {} No mic. Starting text mode.", "⚠️".yellow());
-        return Ok(true);
+    if !has_mic {
+        crate::ui::nullvoid::print_warning("No mic detected. Voice mode unavailable.");
+        return Ok(());
     }
 
-    // Greet
+    // Greet — nullvoid style, no emoji
     let proj = std::env::current_dir().ok()
         .and_then(|p| p.file_name().map(|n| n.to_string_lossy().to_string()))
         .unwrap_or_default();
-    let greeting = format!("I'm Ember, your FORGE voice assistant. Working on {}. What do you need?", proj);
+    let greeting = format!("EMBER online. Working on {}. What do you need?", proj);
     speak(&greeting, &config.api_key).await;
-    println!("  {} {}", "🔊".bright_cyan(), greeting.bright_white());
-    println!();
-    println!("  {} Speak now — I'm listening...", "🎤".bright_red());
-    println!("  {} Say \"quit\" to stop", "  ".dimmed());
+    crate::ui::nullvoid::thin_rule_stdout();
+    crate::ui::nullvoid::print_info(&greeting);
+    crate::ui::nullvoid::print_info("Speak now — listening. Say \"quit\" to stop.");
+    crate::ui::nullvoid::thin_rule_stdout();
     println!();
 
     // Memory
@@ -60,15 +44,18 @@ pub async fn ember_loop(config: &crate::config::Config) -> Result<bool> {
         };
         if user_msg.is_empty() { continue; }
 
-        println!("  {} {}", "🗣️".cyan(), user_msg.bright_white());
+        println!(" {}{} {}{} {}",
+            crate::ui::nullvoid::PLASMA, crate::ui::nullvoid::I_PROMPT,
+            crate::ui::nullvoid::BRIGHT, user_msg,
+            crate::ui::nullvoid::RESET);
 
         let lower = user_msg.to_lowercase();
         if lower.contains("quit") || lower.contains("exit") || lower.contains("goodbye") {
             let bye = "Shutting down. Goodbye.";
             speak(bye, &config.api_key).await;
-            println!("  {} {}", "👋".cyan(), bye);
+            crate::ui::nullvoid::print_info(bye);
             save_mem(&mem_path, &memory);
-            return Ok(false);
+            return Ok(());
         }
 
         memory.push(format!("You: {}", user_msg));
@@ -86,18 +73,8 @@ pub async fn ember_loop(config: &crate::config::Config) -> Result<bool> {
         memory.push(format!("EMBER: {}", response));
 
         speak(&response, &config.api_key).await;
-        println!("  {} {}", "🔥".bright_red(), response.bright_white());
+        crate::ui::nullvoid::print_info(&response);
         println!();
-    }
-}
-
-fn model_line(config: &crate::config::Config) -> String {
-    if config.model.contains("claude") {
-        format!("{} → 🔊", "Claude".purple().bold())
-    } else if config.model.contains("gpt") {
-        format!("{} → 🔊", "GPT".yellow().bold())
-    } else {
-        format!("{} → 🔊", "Gemini".green().bold())
     }
 }
 

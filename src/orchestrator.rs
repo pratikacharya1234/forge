@@ -220,7 +220,7 @@ impl TaskOrchestrator {
         println!("  {} Decomposing task into subtasks...", "[PHASE 2/5]".cyan().bold());
 
         // Use a reasoning-capable model for decomposition
-        let decompose_model = if self.config.anthropic_api_key.as_deref().map_or(false, |k| !k.is_empty()) {
+        let decompose_model = if self.config.anthropic_api_key.as_deref().is_some_and(|k| !k.is_empty()) {
             "claude-4-sonnet"
         } else if self.config.model.contains("pro") {
             &self.config.model
@@ -439,9 +439,9 @@ impl TaskOrchestrator {
 
         match subtask.difficulty.as_str() {
             "critical" | "high" => {
-                if self.config.anthropic_api_key.as_deref().map_or(false, |k| !k.is_empty()) {
+                if self.config.anthropic_api_key.as_deref().is_some_and(|k| !k.is_empty()) {
                     "claude-4-sonnet".into()
-                } else if self.config.openai_api_key.as_deref().map_or(false, |k| !k.is_empty()) {
+                } else if self.config.openai_api_key.as_deref().is_some_and(|k| !k.is_empty()) {
                     "o3".into()
                 } else {
                     "gemini-3-pro".into()
@@ -461,7 +461,7 @@ impl TaskOrchestrator {
         match provider {
             Provider::Gemini => "gemini-3-pro".into(),
             Provider::Anthropic => {
-                if current.contains("sonnet") && self.config.openai_api_key.as_deref().map_or(false, |k| !k.is_empty()) {
+                if current.contains("sonnet") && self.config.openai_api_key.as_deref().is_some_and(|k| !k.is_empty()) {
                     "o3".into()
                 } else {
                     "claude-4-sonnet".into()
@@ -470,7 +470,7 @@ impl TaskOrchestrator {
             Provider::OpenAI => {
                 if current.contains("o3") || current.contains("o4") {
                     current.to_string() // already max
-                } else if self.config.anthropic_api_key.as_deref().map_or(false, |k| !k.is_empty()) {
+                } else if self.config.anthropic_api_key.as_deref().is_some_and(|k| !k.is_empty()) {
                     "claude-4-sonnet".into()
                 } else {
                     "gemini-3-pro".into()
@@ -515,21 +515,21 @@ impl TaskOrchestrator {
 
             // Pick a different model for verification
             let verifier_model = if result.model_used.contains("gemini") {
-                if self.config.anthropic_api_key.as_deref().map_or(false, |k| !k.is_empty()) {
+                if self.config.anthropic_api_key.as_deref().is_some_and(|k| !k.is_empty()) {
                     "claude-4-sonnet"
-                } else if self.config.openai_api_key.as_deref().map_or(false, |k| !k.is_empty()) {
+                } else if self.config.openai_api_key.as_deref().is_some_and(|k| !k.is_empty()) {
                     "o3"
                 } else {
                     &result.model_used // fallback to same model
                 }
             } else if result.model_used.contains("claude") {
-                if self.config.openai_api_key.as_deref().map_or(false, |k| !k.is_empty()) {
+                if self.config.openai_api_key.as_deref().is_some_and(|k| !k.is_empty()) {
                     "o3"
                 } else {
                     "gemini-3-pro"
                 }
             } else {
-                if self.config.anthropic_api_key.as_deref().map_or(false, |k| !k.is_empty()) {
+                if self.config.anthropic_api_key.as_deref().is_some_and(|k| !k.is_empty()) {
                     "claude-4-sonnet"
                 } else {
                     "gemini-3-pro"
@@ -574,9 +574,9 @@ impl TaskOrchestrator {
                         Ok(resp) => {
                             if let Some(verdict) = Self::extract_text(&resp) {
                                 if verdict.to_uppercase().contains("APPROVED") {
-                                    println!("  {} [{}] {} Consensus: APPROVED", "│".dimmed(), result.subtask.id, "✓".green());
+                                    println!("  {} [{}] {} Consensus: APPROVED", "│".dimmed(), result.subtask.id, "◈".green());
                                 } else if verdict.to_uppercase().contains("REJECTED") {
-                                    println!("  {} [{}] {} Consensus: REJECTED — {}", "│".dimmed(), result.subtask.id, "✗".red(), verdict.lines().next().unwrap_or("").dimmed());
+                                    println!("  {} [{}] {} Consensus: REJECTED — {}", "│".dimmed(), result.subtask.id, "⊗".red(), verdict.lines().next().unwrap_or("").dimmed());
                                     // Mark as needing review
                                     for v in &mut verified {
                                         if v.subtask.id == result.subtask.id {
@@ -585,7 +585,7 @@ impl TaskOrchestrator {
                                         }
                                     }
                                 } else {
-                                    println!("  {} [{}] {} Consensus: CONCERNS — {}", "│".dimmed(), result.subtask.id, "⚠".yellow(), verdict.lines().next().unwrap_or("").dimmed());
+                                    println!("  {} [{}] {} Consensus: CONCERNS — {}", "│".dimmed(), result.subtask.id, "⌬".yellow(), verdict.lines().next().unwrap_or("").dimmed());
                                 }
                             }
                         }

@@ -1,8 +1,8 @@
-# FORGE
+# FORGE ◈ NULLVOID
 
 <p align="center">
   <img src="https://img.shields.io/badge/price-FREE-green.svg" alt="100% Free">
-  <img src="https://img.shields.io/badge/version-0.0.1-blue.svg" alt="Version 0.0.1">
+  <img src="https://img.shields.io/badge/version-0.0.2-blue.svg" alt="Version 0.0.2">
   <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License">
   <img src="https://img.shields.io/badge/rust-1.75%2B-orange.svg" alt="Rust 1.75+">
   <img src="https://img.shields.io/badge/context-1M%20tokens-green.svg" alt="1M Token Context">
@@ -10,13 +10,23 @@
   <img src="https://img.shields.io/badge/binary-12MB-lightgrey.svg" alt="Binary 12MB">
 </p>
 
+<p align="center">
+  <img src="assets/demo-banner.png" alt="FORGE NULLVOID Terminal" width="90%">
+</p>
+
+<p align="center">
+  <img src="assets/demo-chat.png" alt="FORGE Domain Bootstrap &amp; Chat" width="90%">
+</p>
+
 ---
 
-**FORGE** is the open-source, multi-model terminal AI coding agent. 1M token context. Built in Rust. Works with Gemini, Claude, and GPT  routing each task to the best model automatically. Free. No subscriptions. No lock-in.
+**FORGE** is the open-source, multi-model terminal AI coding agent. 1M token context. Built in Rust. Works with Gemini, Claude, and GPT — routing each task to the best model automatically. Free. No subscriptions. No lock-in.
 
 ### What Makes FORGE Different
 
 FORGE is the **only** coding agent that:
+- **Has NULLVOID** — spectral terminal theme, zero emoji, pure Unicode geometric glyphs
+- **Domain bootstrap** — pre-loads tech stack, architecture, security patterns before you code
 - **Gets smarter every session** — ALICE learns from errors and auto-injects lessons
 - **Auto-detects project conventions** — language, indentation, build system, linter config
 - **Decomposes tasks across AI models** — routes each subtask to the best provider
@@ -42,7 +52,10 @@ FORGE is the **only** coding agent that:
 | **Interface** | Terminal | Terminal | VS Code | VS Code |
 | **MCP support** | Yes | Yes | Yes | No |
 | **Native integrations** | GitHub, Discord, Gmail, Drive | GitHub | None | GitHub |
+| **Terminal theme** | **NULLVOID** spectral | None | VS Code | VS Code |
 | **Free tier** | ✅ Gemini 1,500 req/day | ❌ | ❌ | ❌ |
+
+> **EMBER Voice AI** is under active development — real-time voice coding with TTS responses. Shipping in v0.0.3.
 
 ## 💯 100% Free — No Credit Card, No Subscription
 

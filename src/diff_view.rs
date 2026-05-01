@@ -98,7 +98,7 @@ pub fn show_and_confirm_hunks(
         const MAX_LINES: usize = 60;
 
         for op in group {
-            for change in diff.iter_changes(&op) {
+            for change in diff.iter_changes(op) {
                 if lines_shown >= MAX_LINES {
                     println!(
                         "  {}  {}",
@@ -146,12 +146,12 @@ pub fn show_and_confirm_hunks(
             break;
         }
 
-        match input.trim().to_lowercase().as_str() {
+        match input.trim() {
             "a" => {
                 accepted += 1;
                 println!("  Accepted hunk {}/{}", hunk_idx + 1, total_hunks);
             }
-            "r" => {
+            "r" | "R" => {
                 rejected += 1;
                 println!("  Rejected hunk {}/{}", hunk_idx + 1, total_hunks);
             }

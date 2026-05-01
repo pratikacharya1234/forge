@@ -23,6 +23,7 @@ mod ui;
 mod packer;
 mod ci_runner;
 mod domain_knowledge;
+mod domain_bootstrap;
 mod voice;
 mod ember;
 
@@ -33,7 +34,7 @@ mod test_harness;
 #[clap(
     name    = "forge",
     about   = "FORGE — Multi-model terminal AI coding agent",
-    version = "0.0.1",
+    version = "0.0.2",
     long_about = None
 )]
 struct Args {
@@ -72,11 +73,13 @@ struct Args {
     ci: bool,
 
     /// Voice input — record mic, transcribe via Gemini, run as prompt.
-    #[clap(long)]
+    /// (Under development — coming in v0.0.3)
+    #[clap(long, hide = true)]
     voice: bool,
 
     /// EMBER — real-time voice AI with Google TTS responses.
-    #[clap(long)]
+    /// (Under development — coming in v0.0.3)
+    #[clap(long, hide = true)]
     ember: bool,
 
     #[clap(long)]
@@ -93,6 +96,11 @@ struct Args {
     /// Attach a screenshot to the initial prompt (ScreenFix).
     #[clap(long)]
     screenshot: Option<String>,
+
+    /// Domain preset: mobile, web, ai, deeplearning, desktop, hardware,
+    /// gamedev, devops, data, general. Skips interactive selector.
+    #[clap(long)]
+    domain: Option<String>,
 
     /// Anthropic (Claude) API key.
     #[clap(long, env = "ANTHROPIC_API_KEY")]
@@ -114,7 +122,7 @@ async fn main() -> Result<()> {
     // Handle non-interactive modes
     if let Some(ref output) = args.pack {
         let msg = packer::pack_project(Some(output))?;
-        println!("  {} {}", "📦", msg);
+        println!("  ⊞ {}", msg);
         return Ok(());
     }
 
@@ -125,8 +133,8 @@ async fn main() -> Result<()> {
         || args.openai_api_key.is_some()
         || file_cfg.anthropic_api_key.is_some()
         || file_cfg.openai_api_key.is_some()
-        || std::env::var("ANTHROPIC_API_KEY").ok().map_or(false, |k| !k.is_empty())
-        || std::env::var("OPENAI_API_KEY").ok().map_or(false, |k| !k.is_empty());
+        || std::env::var("ANTHROPIC_API_KEY").ok().is_some_and(|k| !k.is_empty())
+        || std::env::var("OPENAI_API_KEY").ok().is_some_and(|k| !k.is_empty());
 
     let api_key = args.api_key
         .or(file_cfg.api_key)
@@ -167,7 +175,7 @@ async fn main() -> Result<()> {
             match models::fetch_anthropic_models(&key).await {
                 Ok(list) => {
                     let best = models::resolve_best_anthropic(&list);
-                    eprintln!("  Auto-detected: {} (Anthropic, {} models)", best, list.len());
+                    crate::ui::nullvoid::print_model_detect(&best, "Anthropic", list.len());
                     best
                 }
                 Err(_) => "claude-sonnet-4-20250514".to_string()
@@ -176,7 +184,7 @@ async fn main() -> Result<()> {
             match models::fetch_openai_models(&key).await {
                 Ok(list) => {
                     let best = models::resolve_best_openai(&list);
-                    eprintln!("  Auto-detected: {} (OpenAI, {} models)", best, list.len());
+                    crate::ui::nullvoid::print_model_detect(&best, "OpenAI", list.len());
                     best
                 }
                 Err(_) => "gpt-4o".to_string()
@@ -185,7 +193,7 @@ async fn main() -> Result<()> {
             match models::fetch_available_models(&api_key).await {
                 Ok(all) => {
                     let best = models::resolve_best_model(&all);
-                    eprintln!("  Auto-detected: {} (Gemini, {} models)", best, all.len());
+                    crate::ui::nullvoid::print_model_detect(&best, "Gemini", all.len());
                     best
                 }
                 Err(_) => "gemini-2.5-flash".to_string()
@@ -221,9 +229,13 @@ async fn main() -> Result<()> {
         openai_api_key: args.openai_api_key.or(file_cfg.openai_api_key),
         explain_before_execute: args.explain || file_cfg.explain_before_execute,
         api_base: args.api_base,
+            domain: args.domain,
     };
 
-    // EMBER mode — real-time voice conversation loop
+    // ▸ EMBER / Voice — under development for v0.0.3
+    // ▸ See src/ember.rs and src/voice.rs
+    /*
+    // EMBER mode — real-time voice conversation loop (explicit flag)
     if args.ember {
         ember::ember_loop(&config).await?;
         return Ok(());
@@ -235,6 +247,7 @@ async fn main() -> Result<()> {
         agent::run_once(&config, &text, None).await?;
         return Ok(());
     }
+    */
 
     // CI headless mode — run prompt, output JSON, exit
     if args.ci {
@@ -253,14 +266,18 @@ async fn main() -> Result<()> {
 
     if let Some(prompt) = args.prompt {
         agent::run_once(&config, &prompt, args.screenshot.as_deref()).await?;
-    } else if ember::mic_available() {
-        let want_text = ember::ember_loop(&config).await?;
-        if want_text {
-            agent::run_interactive(&config).await?;
-        }
     } else {
         agent::run_interactive(&config).await?;
     }
+
+    /* ▸ EMBER path — disabled for v0.0.2, ship in v0.0.3
+    } else if ember::mic_available() {
+        if crate::ui::nullvoid::print_mode_selector() {
+            agent::run_interactive(&config).await?;
+        } else {
+            ember::ember_loop(&config).await?;
+        }
+    */
 
     Ok(())
 }
