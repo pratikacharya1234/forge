@@ -38,7 +38,7 @@
       <input 
         type="text" 
         bind:value={url}
-        placeholder="https://github.com/forge-cli/forge"
+        placeholder="https://github.com/pratikacharya1234/forge"
         class="w-full terminal-input text-sm py-3"
       />
     </div>

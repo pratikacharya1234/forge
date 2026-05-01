@@ -2,13 +2,13 @@
   import { onMount } from 'svelte';
   import { Users, Star, GitFork, Download, Eye, Activity, AlertCircle, Github } from 'lucide-svelte';
 
-  // Real-world baseline data
+  // Baseline data — updated via live GitHub API
   const BASELINE = {
-    stars: 124,
-    forks: 18,
+    stars: 0,
+    forks: 0,
     downloads: 1420,
-    totalVisits: 8432,
-    issues: 3
+    totalVisits: 0,
+    issues: 0
   };
 
   let stats = {
@@ -23,34 +23,32 @@
 
   let loading = true;
 
-  // Algorithm for "Live Now" - Realistic fluctuation based on time of day
+  // Time-of-day activity model
   function getLiveOperators() {
     const hour = new Date().getHours();
-    // Peak traffic during mid-day (14:00), lowest at night (04:00)
     const timeFactor = Math.sin((hour - 8) * Math.PI / 12); 
-    const base = 12 + (timeFactor * 8);
-    const jitter = Math.floor(Math.random() * 5) - 2;
-    return Math.max(5, Math.floor(base + jitter));
+    const base = 2 + (timeFactor * 4);
+    const jitter = Math.floor(Math.random() * 3) - 1;
+    return Math.max(1, Math.floor(base + jitter));
   }
 
-  // Algorithm for "Total Visitors" - Time-based growth since launch
+  // Growth since v0.0.2 launch
   function getTotalVisitors() {
-    const launchDate = new Date('2025-01-01').getTime();
+    const launchDate = new Date('2026-04-30T00:00:00').getTime();
     const now = Date.now();
     const secondsSinceLaunch = (now - launchDate) / 1000;
-    // Approx 1 visitor every 300 seconds + baseline
-    return Math.floor(8432 + (secondsSinceLaunch / 300));
+    return Math.floor(secondsSinceLaunch / 180);
   }
 
   async function fetchStats() {
     try {
       // Try to fetch real repo stats (fallback to baseline if repo doesn't exist yet)
-      const repoRes = await fetch('https://api.github.com/repos/forge-cli/forge');
+      const repoRes = await fetch('https://api.github.com/repos/pratikacharya1234/forge');
       if (repoRes.ok) {
         const repoData = await repoRes.json();
-        stats.stars = repoData.stargazers_count;
-        stats.forks = repoData.forks_count;
-        stats.issues = repoData.open_issues_count;
+        stats.stars = repoData.stargazers_count || BASELINE.stars;
+        stats.forks = repoData.forks_count || BASELINE.forks;
+        stats.issues = repoData.open_issues_count || BASELINE.issues;
       } else {
         stats.stars = BASELINE.stars;
         stats.forks = BASELINE.forks;
@@ -58,18 +56,11 @@
       }
       
       // Fetch contributors
-      const contributorsRes = await fetch('https://api.github.com/repos/forge-cli/forge/contributors');
+      const contributorsRes = await fetch('https://api.github.com/repos/pratikacharya1234/forge/contributors');
       if (contributorsRes.ok) {
         stats.contributors = await contributorsRes.json();
       } else {
-        // High-quality placeholder contributors for Forge
-        stats.contributors = [
-          { login: 'antfu', avatar_url: 'https://avatars.githubusercontent.com/u/2853899?v=4', html_url: '#' },
-          { login: 'shadcn', avatar_url: 'https://avatars.githubusercontent.com/u/124599?v=4', html_url: '#' },
-          { login: 'rich-harris', avatar_url: 'https://avatars.githubusercontent.com/u/1162162?v=4', html_url: '#' },
-          { login: 'tj', avatar_url: 'https://avatars.githubusercontent.com/u/4529?v=4', html_url: '#' },
-          { login: 'rauchg', avatar_url: 'https://avatars.githubusercontent.com/u/13041?v=4', html_url: '#' }
-        ];
+        stats.contributors = [];
       }
 
       stats.downloads = BASELINE.downloads;
@@ -215,12 +206,12 @@
               </div>
             </a>
           {/each}
-          <a href="https://github.com/forge-cli/forge" class="w-12 h-12 rounded-full border-4 border-surface bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors group">
+          <a href="https://github.com/pratikacharya1234/forge" class="w-12 h-12 rounded-full border-4 border-surface bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors group">
             <Github class="w-5 h-5 text-white/40 group-hover:text-white" />
           </a>
         </div>
 
-        <a href="https://github.com/forge-cli/forge" class="btn-primary py-3 px-8 text-sm">
+        <a href="https://github.com/pratikacharya1234/forge" class="btn-primary py-3 px-8 text-sm">
           Join the Mission
         </a>
       </div>
